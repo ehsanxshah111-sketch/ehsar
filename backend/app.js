@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import dotenv from "dotenv";
+import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import bannerRoutes from "./routes/bannerRoutes.js";
@@ -9,6 +11,14 @@ import userRoutes from "./routes/userRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentSettingsRoutes from "./routes/paymentSettingsRoutes.js";
 import activityLogRoutes from "./routes/activityLogRoutes.js";
+
+// dotenv.config() and connectDB() both live here (not in server.js) because
+// Vercel's zero-config Express detection may load this file directly as the
+// serverless entrypoint and never execute server.js at all. Keeping both
+// calls here means the app works correctly no matter which file Vercel
+// actually picks as the entry - locally, on Vercel, either way.
+dotenv.config();
+connectDB();
 
 const app = express();
 
