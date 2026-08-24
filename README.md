@@ -3,22 +3,29 @@
 A full-stack MERN (MongoDB, Express, React, Node.js) e-commerce website for a
 men's & women's clothing brand called **Ehsar**, styled after brands like
 Zara and H&M — clean, classic, minimal. Includes a hidden admin panel for
-managing banners, promotions, and products.
+managing the whole store: products, banners, orders, payments, and customers.
 
 ## What's included
 
 - **Storefront**: Home page with rotating banner carousel, shop page with
   men/women filtering and search, product detail page with size/color
-  selection, and a shopping cart with checkout flow (demo — wire up a real
-  payment provider before going live).
+  selection, and a shopping cart with checkout.
+- **Payments**: customers pay via JazzCash, Easypaisa, or Bank Transfer —
+  they send payment themselves and submit a transaction ID + required
+  screenshot as proof; you verify it in the admin panel before the order
+  is confirmed. Your account numbers are editable from the admin panel,
+  no code changes needed.
 - **Hidden Admin Panel**: not linked from the public site. Reachable only if
   you know the URL. Lets you:
   - Log in with a username/password (JWT-based auth)
   - Change the admin password
   - Add, edit, and delete products
-  - Add, edit, and delete homepage banners, including promotional text
-    (e.g. "UP TO 50% OFF")
-  - See a quick overview of your catalog
+  - Add, edit, and delete homepage banners
+  - Manage orders and verify/reject submitted payments
+  - Edit your JazzCash/Easypaisa/Bank Transfer account details shown at checkout
+  - View a directory of registered customers (name, email, phone — never
+    passwords, which are one-way hashed and can't be shown to anyone)
+  - View an activity log of admin actions (logins, edits, payment verification, etc.)
 - **8 sample products already seeded** (4 men's, 4 women's) using stock
   photography, plus 2 sample banners — so the site looks complete
   immediately. Replace these with your own product photos and copy at your
@@ -34,31 +41,37 @@ managing banners, promotions, and products.
 
 ```
 ehsar-mern/
+  vercel.json              Vercel Services config (deploy as one project)
   backend/
-    config/db.js         Mongo connection
-    models/               Admin, Product, Banner schemas
-    middleware/auth.js     JWT auth middleware
-    routes/                auth, products, banners
-    utils/seed.js          Seeds sample data + default admin
-    server.js               Express app entry point
+    app.js                  Express app (routes, middleware - no listen)
+    server.js                Local dev entry point (app.listen)
+    config/db.js             Mongo connection
+    models/                  Admin, User, Product, Banner, Order,
+                              PaymentSettings, ActivityLog schemas
+    middleware/               auth.js (admin JWT), userAuth.js (customer JWT)
+    routes/                   auth, products, banners, users, orders,
+                              paymentSettings, activityLogs
+    utils/seed.js             Seeds sample data + default admin
   frontend/
     src/
-      pages/                Home, Shop, ProductDetail, Cart
-      pages/admin/           AdminLogin, AdminLayout, ManageProducts,
-                              ManageBanners, ChangePassword, AdminOverview
-      components/            Navbar, Footer, BannerCarousel, ProductCard
-      context/                CartContext, AuthContext
-      adminConfig.js          Hidden admin URL path (change this!)
+      pages/                  Home, Shop, ProductDetail, Cart, MyOrders
+      pages/admin/             AdminLogin, AdminLayout, ManageProducts,
+                              ManageBanners, ManageOrders,
+                              ManagePaymentSettings, Customers,
+                              ActivityLog, ChangePassword, AdminOverview
+      components/              Navbar, Footer, BannerCarousel, ProductCard
+      context/                 CartContext, CustomerAuthContext, AuthContext
+      adminConfig.js            Hidden admin URL path (change this!)
 ```
 
-## Getting started
+## Getting started (local development)
 
 ### 1. Prerequisites
 
 - Node.js 18+
 - A MongoDB database — either:
   - Local: install MongoDB Community Server and run it locally, or
-  - Free cloud option: create a free cluster at https://www.mongodb.com/cloud/atlas
+  - Free hosted: a [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster
 
 ### 2. Backend setup
 
@@ -125,11 +138,6 @@ Visit `http://localhost:5173` for the storefront.
 
 ### 4. Accessing the hidden admin panel
 
-The admin login is **not linked anywhere on the public site** — no button,
-no footer link — by design, so casual visitors won't stumble onto it.
-
-Default path:
-
 ```
 http://localhost:5173/ehsar-control-x7q9
 ```
@@ -142,51 +150,45 @@ http://localhost:5173/ehsar-control-x7q9
 3. Set a strong, random `JWT_SECRET` in the backend `.env`.
 4. Never commit your real `.env` files (they're already git-ignored).
 
-Login credentials after seeding (from your `.env`):
-
-```
-Username: admin
-Password: Ehsar@Admin123
-```
-
-### 5. Adding your own products & banners
+### 5. Adding your own products, banners & payment details
 
 Everything is editable from the admin panel — no code changes needed:
 
 - **Products** → Admin sidebar → Products → "+ Add Product". Fill in name,
   price, category (men/women), sub-category, sizes, colors, and image
-  URLs (comma-separated). Host your product photos anywhere (e.g. Cloudinary,
-  imgur, your own CDN) and paste the URLs in.
-- **Banners** → Admin sidebar → Banners → "+ Add Banner". Set the headline,
-  promotion text (e.g. "UP TO 50% OFF"), image, and the link the "Shop Now"
-  button goes to. Toggle banners active/hidden without deleting them.
+  URLs (comma-separated). Host your product photos anywhere (e.g. imgur,
+  Cloudinary, your own CDN) and paste the URLs in — a real link starting
+  with `http://` or `https://`, not raw image file data.
+- **Banners** → Admin sidebar → Banners → "+ Add Banner". Same image URL
+  rule applies. Toggle banners active/hidden without deleting them.
+- **Payment Settings** → Admin sidebar → Payment Settings → enter your
+  real JazzCash, Easypaisa, and bank account details. These are exactly
+  what customers see at checkout.
+- **Orders** → Admin sidebar → Orders → check a customer's submitted
+  transaction ID and screenshot against your own JazzCash/Easypaisa/bank
+  account, then mark the payment Verified or Rejected.
 
 The 8 seeded products and 2 seeded banners are placeholders using stock
 photography so the site isn't empty on first run — replace them with your
 real catalog whenever you're ready.
 
-## Building for production
+## Deploying
 
-**Frontend:**
-```bash
-cd frontend
-npm run build
-```
-This outputs static files to `frontend/dist` — deploy to Vercel, Netlify,
-or any static host.
-
-**Backend:**
-Deploy the `backend/` folder to any Node host (Render, Railway, a VPS,
-etc.), set the environment variables from `.env.example` there, and point
-your frontend's `VITE_API_URL` at the deployed API URL.
+See [`DEPLOY.md`](./DEPLOY.md) for full step-by-step instructions to
+deploy this as a single Vercel project (frontend + backend on one domain,
+via [Vercel Services](https://vercel.com/docs/services)).
 
 ## Notes on what's a placeholder vs production-ready
 
-- **Checkout** is a demo flow (it clears the cart and shows a thank-you
-  screen). Wire it to Stripe, PayPal, or another payment processor before
-  accepting real orders.
+- **Payments** use a manual verification flow (customer sends money
+  directly to your JazzCash/Easypaisa/bank account and reports it) rather
+  than a live payment gateway API — JazzCash/Easypaisa require a
+  registered business merchant account to integrate directly, which isn't
+  free for an individual. This manual flow is what most small stores in
+  Pakistan actually use.
 - **Product images** are hot-linked stock photos from Unsplash to seed the
   site — replace with your own hosted images.
 - **Admin auth** uses JWT + bcrypt and is reasonably secure for a small
-  store, but if this becomes a serious storefront, also add HTTPS,
-  2FA on the admin login, and stricter rate limiting/logging.
+  store, but if this becomes a serious storefront, also add HTTPS
+  (Vercel gives you this by default), 2FA on the admin login, and
+  stricter rate limiting/logging.
