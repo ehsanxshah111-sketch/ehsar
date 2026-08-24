@@ -1,0 +1,151 @@
+import express from "express";
+import Order from "../models/Order.js";
+import { protectUser } from "../middleware/userAuth.js";
+import { protect } from "../middleware/auth.js";
+import { logActivity } from "../utils/activityLogger.js";
+
+const router = express.Router();
+
+const PAYMENT_METHODS = ["JazzCash", "Easypaisa", "BankTransfer"];
+// Rough cap on the base64 screenshot string so a bad request can't stuff a
+// huge file into the database (express.json is already capped at 5mb too).
+const MAX_SCREENSHOT_LENGTH = 1_500_000; // ~1MB of actual image data
+
+// POST /api/orders  (customer only) - place an order from the cart
+router.post("/", protectUser, async (req, res) => {
+  try {
+    const { items, shippingAddress, paymentMethod, transactionId, paymentScreenshot } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "Your order has no items" });
+    }
+    if (
+      !shippingAddress ||
+      !shippingAddress.fullName ||
+      !shippingAddress.houseNumber ||
+      !shippingAddress.street ||
+      !shippingAddress.address ||
+      !shippingAddress.city ||
+      !shippingAddress.phone
+    ) {
+      return res.status(400).json({ message: "Full shipping details are required" });
+    }
+    if (!PAYMENT_METHODS.includes(paymentMethod)) {
+      return res.status(400).json({ message: "Please choose a valid payment method" });
+    }
+    // JazzCash/Easypaisa/Bank Transfer are self-reported by the customer, so
+    // we require both a transaction ID and a screenshot before we'll even
+    // create the order - otherwise there's nothing for the admin to verify.
+    if (!transactionId?.trim()) {
+      return res.status(400).json({ message: "Please enter the transaction ID / reference number" });
+    }
+    if (!paymentScreenshot) {
+      return res.status(400).json({ message: "Please upload a screenshot of the payment" });
+    }
+    if (paymentScreenshot.length > MAX_SCREENSHOT_LENGTH) {
+      return res.status(400).json({ message: "Screenshot is too large, please upload a smaller image" });
+    }
+
+    // Recomputed here rather than trusting a client-sent total, so a
+    // tampered request can't place an order for less than it should cost.
+    const totalAmount = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+    const order = await Order.create({
+      user: req.customer._id,
+      items,
+      shippingAddress,
+      totalAmount,
+      paymentMethod,
+      transactionId: transactionId.trim(),
+      paymentScreenshot,
+    });
+
+    res.status(201).json(order);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// GET /api/orders/my  (customer only) - this customer's own orders, newest first
+router.get("/my", protectUser, async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.customer._id }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// GET /api/orders  (admin only) - every order, newest first
+router.get("/", protect, async (req, res) => {
+  try {
+    const orders = await Order.find().populate("user", "name email").sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// PUT /api/orders/:id/status  (admin only) - move an order to its next stage
+router.put("/:id/status", protect, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowed = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+    const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    await logActivity(
+      req.admin.username,
+      "Order Status Updated",
+      `${req.admin.username} set order #${order._id.toString().slice(-6).toUpperCase()} to ${status}`
+    );
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// PUT /api/orders/:id/payment-status  (admin only) - confirm or reject a
+// self-reported JazzCash/Easypaisa/bank transfer after checking the account
+router.put("/:id/payment-status", protect, async (req, res) => {
+  try {
+    const { paymentStatus, paymentNote } = req.body;
+    const allowed = ["Submitted", "Verified", "Rejected"];
+    if (!allowed.includes(paymentStatus)) {
+      return res.status(400).json({ message: "Invalid payment status" });
+    }
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { paymentStatus, paymentNote: paymentNote || "" },
+      { new: true }
+    );
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    await logActivity(
+      req.admin.username,
+      "Payment Status Updated",
+      `${req.admin.username} marked order #${order._id.toString().slice(-6).toUpperCase()} payment as ${paymentStatus}`
+    );
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// DELETE /api/orders/:id  (admin only) - e.g. to remove a test/mistaken order
+router.delete("/:id", protect, async (req, res) => {
+  try {
+    const order = await Order.findByIdAndDelete(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    await logActivity(
+      req.admin.username,
+      "Order Deleted",
+      `${req.admin.username} deleted order #${order._id.toString().slice(-6).toUpperCase()}`
+    );
+    res.json({ message: "Order deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+export default router;

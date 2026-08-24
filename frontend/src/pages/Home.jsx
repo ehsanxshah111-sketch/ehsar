@@ -1,0 +1,95 @@
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import api from "../api/axios.js";
+import BannerCarousel from "../components/BannerCarousel.jsx";
+import ProductCard from "../components/ProductCard.jsx";
+
+const Home = () => {
+  const [banners, setBanners] = useState([]);
+  const [featured, setFeatured] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [bannerRes, productRes] = await Promise.all([
+          api.get("/banners"),
+          api.get("/products", { params: { featured: true } }),
+        ]);
+        setBanners(bannerRes.data);
+        setFeatured(productRes.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  return (
+    <div>
+      <BannerCarousel banners={banners} />
+
+      <section className="container-ehsar py-20">
+        <h2 className="section-title">Featured Pieces</h2>
+        {loading ? (
+          <p className="text-center text-gray-400">Loading...</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
+            {featured.slice(0, 8).map((p) => (
+              <ProductCard key={p._id} product={p} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="grid grid-cols-1 md:grid-cols-2">
+        <Link to="/shop?category=women" className="relative group h-[50vh] overflow-hidden block">
+          <img
+            src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200"
+            alt="Women's Collection"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+            <span className="text-white text-2xl tracking-widest2 uppercase border-b border-white pb-1">
+              Women
+            </span>
+          </div>
+        </Link>
+        <Link to="/shop?category=men" className="relative group h-[50vh] overflow-hidden block">
+          <img
+            src="https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=1200"
+            alt="Men's Collection"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+            <span className="text-white text-2xl tracking-widest2 uppercase border-b border-white pb-1">
+              Men
+            </span>
+          </div>
+        </Link>
+      </section>
+
+      <section className="container-ehsar py-20 text-center">
+        <h2 className="section-title">The Ehsar Promise</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 max-w-4xl mx-auto text-sm text-gray-600">
+          <div>
+            <h3 className="font-display text-lg mb-2 text-ehsar-black">Considered Design</h3>
+            <p>Every piece is designed to last beyond a single season.</p>
+          </div>
+          <div>
+            <h3 className="font-display text-lg mb-2 text-ehsar-black">Quality Materials</h3>
+            <p>Sourced fabrics chosen for comfort, durability and feel.</p>
+          </div>
+          <div>
+            <h3 className="font-display text-lg mb-2 text-ehsar-black">Secure Payments</h3>
+            <p>Verified JazzCash, Easypaisa and bank transfer payments on every order.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;

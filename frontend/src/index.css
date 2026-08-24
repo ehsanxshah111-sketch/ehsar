@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-white text-ehsar-black font-sans antialiased;
+}
+
+h1, h2, h3, .font-display {
+  @apply font-serif;
+}
+
+.container-ehsar {
+  @apply max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12;
+}
+
+.btn-primary {
+  @apply inline-block bg-ehsar-black text-white px-8 py-3 text-sm tracking-widest2 uppercase hover:bg-ehsar-gold transition-colors duration-300;
+}
+
+.btn-outline {
+  @apply inline-block border border-ehsar-black text-ehsar-black px-8 py-3 text-sm tracking-widest2 uppercase hover:bg-ehsar-black hover:text-white transition-colors duration-300;
+}
+
+.section-title {
+  @apply text-2xl sm:text-3xl tracking-widest2 uppercase text-center mb-10;
+}
+
+.input-field {
+  @apply w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-ehsar-black transition-colors bg-white;
+}
+
+.admin-card {
+  @apply bg-white border border-gray-200 rounded-sm shadow-sm;
+}
+
+/* Rotating brand badge in the header - a full 360deg spin on the Y axis,
+   forever, next to the "Ehsar" wordmark. */
+.logo-badge-360 {
+  transform-style: preserve-3d;
+  animation: spin360 7s linear infinite;
+}
+@keyframes spin360 {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-badge-360 { animation: none; }
+}
