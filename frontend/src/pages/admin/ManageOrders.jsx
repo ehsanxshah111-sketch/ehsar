@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/axios.js";
+import { formatPKR } from "../../utils/currency.js";
 
 const STATUS_OPTIONS = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
 
@@ -96,7 +97,7 @@ const ManageOrders = () => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">${order.totalAmount.toFixed(2)}</p>
+                  <p className="font-medium">{formatPKR(order.totalAmount)}</p>
                   <p className={`text-xs uppercase tracking-wide ${statusColor(order.status)}`}>
                     {order.status}
                   </p>

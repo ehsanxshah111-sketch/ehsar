@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import customerApi from "../api/customerAxios.js";
+import { formatPKR } from "../utils/currency.js";
 
 const STEPS = ["Pending", "Processing", "Shipped", "Delivered"];
 
@@ -103,7 +104,7 @@ const MyOrders = () => {
               <span className="text-xs text-gray-500">
                 Order #{order._id.slice(-6).toUpperCase()} · {new Date(order.createdAt).toLocaleDateString()}
               </span>
-              <span className="text-sm font-medium">${order.totalAmount.toFixed(2)}</span>
+              <span className="text-sm font-medium">{formatPKR(order.totalAmount)}</span>
             </div>
 
             <PaymentBadge order={order} />
@@ -122,7 +123,7 @@ const MyOrders = () => {
                       {item.size && `Size: ${item.size}`} {item.color && ` · ${item.color}`} · Qty {item.qty}
                     </p>
                   </div>
-                  <span>${(item.price * item.qty).toFixed(2)}</span>
+                  <span>{formatPKR(item.price * item.qty)}</span>
                 </div>
               ))}
             </div>

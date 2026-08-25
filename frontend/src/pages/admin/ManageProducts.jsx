@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/axios.js";
+import { formatPKR } from "../../utils/currency.js";
 
 const emptyForm = {
   name: "",
@@ -139,12 +140,12 @@ const ManageProducts = () => {
               </select>
             </div>
             <div>
-              <label className="text-xs uppercase text-gray-500 mb-1 block">Price ($) *</label>
-              <input name="price" type="number" step="0.01" value={form.price} onChange={handleChange} className="input-field" required />
+              <label className="text-xs uppercase text-gray-500 mb-1 block">Price (PKR) *</label>
+              <input name="price" type="number" step="1" value={form.price} onChange={handleChange} className="input-field" required />
             </div>
             <div>
-              <label className="text-xs uppercase text-gray-500 mb-1 block">Discount Price ($)</label>
-              <input name="discountPrice" type="number" step="0.01" value={form.discountPrice} onChange={handleChange} className="input-field" />
+              <label className="text-xs uppercase text-gray-500 mb-1 block">Discount Price (PKR)</label>
+              <input name="discountPrice" type="number" step="1" value={form.discountPrice} onChange={handleChange} className="input-field" />
             </div>
             <div>
               <label className="text-xs uppercase text-gray-500 mb-1 block">Sub-category</label>
@@ -232,11 +233,11 @@ const ManageProducts = () => {
                   <td className="p-4">
                     {p.isOnSale && p.discountPrice ? (
                       <>
-                        <span className="line-through text-gray-400 mr-1">${p.price}</span>
-                        <span>${p.discountPrice}</span>
+                        <span className="line-through text-gray-400 mr-1">{formatPKR(p.price)}</span>
+                        <span>{formatPKR(p.discountPrice)}</span>
                       </>
                     ) : (
-                      `$${p.price}`
+                      formatPKR(p.price)
                     )}
                   </td>
                   <td className="p-4">{p.stock}</td>

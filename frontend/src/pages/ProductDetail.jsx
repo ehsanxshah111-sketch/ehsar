@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/axios.js";
 import { useCart } from "../context/CartContext.jsx";
+import { formatPKR } from "../utils/currency.js";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -61,11 +62,11 @@ const ProductDetail = () => {
         <div className="mb-6 text-lg">
           {hasDiscount ? (
             <>
-              <span className="line-through text-gray-400 mr-3">${product.price}</span>
-              <span className="text-ehsar-gold">${product.discountPrice}</span>
+              <span className="line-through text-gray-400 mr-3">{formatPKR(product.price)}</span>
+              <span className="text-ehsar-gold">{formatPKR(product.discountPrice)}</span>
             </>
           ) : (
-            <span>${product.price}</span>
+            <span>{formatPKR(product.price)}</span>
           )}
         </div>
 
@@ -113,7 +114,7 @@ const ProductDetail = () => {
         </button>
 
         <div className="mt-10 text-xs text-gray-500 leading-relaxed border-t border-gray-200 pt-6">
-          <p>Free shipping on orders over $100.</p>
+          <p>Free shipping on orders over {formatPKR(10000)}.</p>
         </div>
       </div>
     </div>

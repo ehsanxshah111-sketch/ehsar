@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { useCustomerAuth } from "../context/CustomerAuthContext.jsx";
 import customerApi from "../api/customerAxios.js";
+import { formatPKR } from "../utils/currency.js";
 
 const MAX_SCREENSHOT_BYTES = 1_000_000; // ~1MB, matches the backend cap
 const PAYMENT_METHODS = ["JazzCash", "Easypaisa", "BankTransfer"];
@@ -46,7 +47,7 @@ const Cart = () => {
       .catch(() => setPaymentSettings(null));
   }, []);
 
-  const shippingCost = total >= 100 ? 0 : 8;
+  const shippingCost = total >= 10000 ? 0 : 250;
   const grandTotal = total + shippingCost;
 
   const handleShippingChange = (e) => setShipping({ ...shipping, [e.target.name]: e.target.value });
@@ -150,7 +151,7 @@ const Cart = () => {
                 <p className="text-xs text-gray-500 mb-2">
                   {item.size && `Size: ${item.size}`} {item.color && ` · Color: ${item.color}`}
                 </p>
-                <p className="text-sm mb-3">${item.price}</p>
+                <p className="text-sm mb-3">{formatPKR(item.price)}</p>
                 <div className="flex items-center gap-3">
                   <input
                     type="number"
@@ -173,15 +174,15 @@ const Cart = () => {
         <h2 className="text-lg font-display uppercase tracking-wide mb-6">Order Summary</h2>
         <div className="flex justify-between text-sm mb-3">
           <span>Subtotal</span>
-          <span>${total.toFixed(2)}</span>
+          <span>{formatPKR(total)}</span>
         </div>
         <div className="flex justify-between text-sm mb-6 text-gray-500">
           <span>Shipping</span>
-          <span>{shippingCost === 0 ? "Free" : `$${shippingCost.toFixed(2)}`}</span>
+          <span>{shippingCost === 0 ? "Free" : formatPKR(shippingCost)}</span>
         </div>
         <div className="flex justify-between text-base font-medium border-t border-gray-200 pt-4 mb-6">
           <span>Total</span>
-          <span>${grandTotal.toFixed(2)}</span>
+          <span>{formatPKR(grandTotal)}</span>
         </div>
 
         {!isAuthenticated ? (

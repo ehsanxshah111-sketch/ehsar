@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { formatPKR } from "../utils/currency.js";
 
 const ProductCard = ({ product }) => {
   const hasDiscount = product.isOnSale && product.discountPrice;
@@ -28,11 +29,11 @@ const ProductCard = ({ product }) => {
         <div className="mt-1 text-sm">
           {hasDiscount ? (
             <>
-              <span className="line-through text-gray-400 mr-2">${product.price}</span>
-              <span className="text-ehsar-gold">${product.discountPrice}</span>
+              <span className="line-through text-gray-400 mr-2">{formatPKR(product.price)}</span>
+              <span className="text-ehsar-gold">{formatPKR(product.discountPrice)}</span>
             </>
           ) : (
-            <span>${product.price}</span>
+            <span>{formatPKR(product.price)}</span>
           )}
         </div>
       </div>
