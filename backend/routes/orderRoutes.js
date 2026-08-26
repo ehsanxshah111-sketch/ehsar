@@ -65,21 +65,70 @@ router.post("/", protectUser, async (req, res) => {
   }
 });
 
-// GET /api/orders/my  (customer only) - this customer's own orders, newest first
+// GET /api/orders/my  (customer only) - this customer's own orders, newest first.
+// paymentScreenshot is excluded - it's never shown back to the customer, and
+// at up to ~1MB of base64 per order it was the main thing making this page
+// slow to load.
 router.get("/my", protectUser, async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.customer._id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: req.customer._id })
+      .select("-paymentScreenshot")
+      .sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
-// GET /api/orders  (admin only) - every order, newest first
+// GET /api/orders/summary  (admin only) - just the two numbers the sidebar
+// badge and dashboard cards need. Computed in the database instead of
+// pulling every order (with its ~1MB screenshot) down to the browser just to
+// count/sum a couple of fields - this is what made the admin panel feel slow
+// to load, since it was happening 2-3 times on every dashboard visit
+// (sidebar badge, Overview page, then again on Orders/Payments).
+router.get("/summary", protect, async (req, res) => {
+  try {
+    const [pendingPayments, revenueResult] = await Promise.all([
+      Order.countDocuments({ paymentStatus: "Submitted" }),
+      Order.aggregate([
+        { $match: { paymentStatus: "Verified" } },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+      ]),
+    ]);
+    res.json({
+      pendingPayments,
+      verifiedRevenue: revenueResult[0]?.total || 0,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// GET /api/orders  (admin only) - every order, newest first. paymentScreenshot
+// is excluded here too - the Orders/Payments list pages fetch it on demand
+// via GET /api/orders/:id/screenshot only when the admin actually clicks to
+// view one, instead of every order dragging its full image along for a list
+// that mostly doesn't need to show it.
 router.get("/", protect, async (req, res) => {
   try {
-    const orders = await Order.find().populate("user", "name email").sort({ createdAt: -1 });
+    const orders = await Order.find()
+      .select("-paymentScreenshot")
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
     res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// GET /api/orders/:id/screenshot  (admin only) - fetched on demand when the
+// admin clicks "View Screenshot", instead of shipping every order's image
+// with every list load.
+router.get("/:id/screenshot", protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).select("paymentScreenshot");
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json({ paymentScreenshot: order.paymentScreenshot });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

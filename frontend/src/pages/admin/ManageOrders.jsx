@@ -20,6 +20,22 @@ const ManageOrders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const openScreenshot = async (orderId) => {
+    setPreviewLoading(true);
+    setPreviewImage("");
+    try {
+      const { data } = await api.get(`/orders/${orderId}/screenshot`);
+      setPreviewImage(data.paymentScreenshot);
+    } catch (err) {
+      setError(err?.response?.data?.message || "Could not load the screenshot");
+      setPreviewImage(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const loadOrders = async () => {
     setLoading(true);
@@ -143,15 +159,16 @@ const ManageOrders = () => {
                     <span className="text-gray-500">Transaction ID:</span> {order.transactionId}
                   </p>
                 )}
-                {order.paymentScreenshot && (
-                  <a href={order.paymentScreenshot} target="_blank" rel="noreferrer">
-                    <img
-                      src={order.paymentScreenshot}
-                      alt="Payment proof"
-                      className="h-24 border border-gray-200 mt-1"
-                    />
-                  </a>
-                )}
+                {/* paymentScreenshot is deliberately left out of the list
+                    response (see backend route) so this list loads fast -
+                    every order requires one, so it's fetched only when
+                    actually clicked. */}
+                <button
+                  onClick={() => openScreenshot(order._id)}
+                  className="underline text-gray-600 block"
+                >
+                  View Payment Screenshot
+                </button>
                 <div className="flex gap-2 pt-1">
                   <button
                     disabled={updatingId === order._id || order.paymentStatus === "Verified"}
@@ -206,6 +223,26 @@ const ManageOrders = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {(previewImage !== null || previewLoading) && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-6"
+          onClick={() => {
+            setPreviewImage(null);
+            setPreviewLoading(false);
+          }}
+        >
+          {previewLoading ? (
+            <p className="text-white text-sm">Loading screenshot…</p>
+          ) : (
+            <img
+              src={previewImage}
+              alt="Payment proof"
+              className="max-h-[85vh] max-w-full border-4 border-white"
+            />
+          )}
         </div>
       )}
     </div>

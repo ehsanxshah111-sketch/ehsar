@@ -11,10 +11,10 @@ const AdminOverview = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [products, banners, orders] = await Promise.all([
+        const [products, banners, summary] = await Promise.all([
           api.get("/products"),
           api.get("/banners/all"),
-          api.get("/orders"),
+          api.get("/orders/summary"),
         ]);
         setStats({
           products: products.data.length,
@@ -22,11 +22,7 @@ const AdminOverview = () => {
           women: products.data.filter((p) => p.category === "women").length,
           banners: banners.data.length,
         });
-        const pending = orders.data.filter((o) => o.paymentStatus === "Submitted").length;
-        const revenue = orders.data
-          .filter((o) => o.paymentStatus === "Verified")
-          .reduce((sum, o) => sum + o.totalAmount, 0);
-        setPayments({ pending, revenue });
+        setPayments({ pending: summary.data.pendingPayments, revenue: summary.data.verifiedRevenue });
       } catch (err) {
         console.error(err);
       }

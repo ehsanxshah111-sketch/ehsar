@@ -30,6 +30,21 @@ const Payments = () => {
   const [updatingId, setUpdatingId] = useState(null);
   const [tab, setTab] = useState("Needs Review");
   const [previewImage, setPreviewImage] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const openScreenshot = async (orderId) => {
+    setPreviewLoading(true);
+    setPreviewImage("");
+    try {
+      const { data } = await api.get(`/orders/${orderId}/screenshot`);
+      setPreviewImage(data.paymentScreenshot);
+    } catch (err) {
+      setError(err?.response?.data?.message || "Could not load the screenshot");
+      setPreviewImage(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const loadOrders = async () => {
     try {
@@ -160,14 +175,16 @@ const Payments = () => {
                 <span className="text-gray-500">
                   Transaction ID: <span className="text-gray-800 font-medium">{order.transactionId}</span>
                 </span>
-                {order.paymentScreenshot && (
-                  <button
-                    onClick={() => setPreviewImage(order.paymentScreenshot)}
-                    className="underline text-gray-600"
-                  >
-                    View Screenshot
-                  </button>
-                )}
+                {/* paymentScreenshot is deliberately left out of the list
+                    response for load-time reasons (see backend route) - it's
+                    required on every order, so the button is always shown
+                    and the image is fetched only when actually clicked. */}
+                <button
+                  onClick={() => openScreenshot(order._id)}
+                  className="underline text-gray-600"
+                >
+                  View Screenshot
+                </button>
                 {order.shippingAddress?.phone && (
                   <a
                     href={buildWhatsAppLink(order)}
@@ -227,16 +244,23 @@ const Payments = () => {
         </div>
       )}
 
-      {previewImage && (
+      {(previewImage !== null || previewLoading) && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-6"
-          onClick={() => setPreviewImage(null)}
+          onClick={() => {
+            setPreviewImage(null);
+            setPreviewLoading(false);
+          }}
         >
-          <img
-            src={previewImage}
-            alt="Payment proof"
-            className="max-h-[85vh] max-w-full border-4 border-white"
-          />
+          {previewLoading ? (
+            <p className="text-white text-sm">Loading screenshot…</p>
+          ) : (
+            <img
+              src={previewImage}
+              alt="Payment proof"
+              className="max-h-[85vh] max-w-full border-4 border-white"
+            />
+          )}
         </div>
       )}
     </div>
