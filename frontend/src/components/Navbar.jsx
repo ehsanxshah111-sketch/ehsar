@@ -70,13 +70,8 @@ const Navbar = () => {
           </svg>
         </button>
 
-        <Link to="/" className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-full border border-ehsar-gold flex items-center justify-center font-serif font-semibold text-lg text-[#e9e2cd] bg-[radial-gradient(circle_at_35%_30%,#262624,#0d0d0c_70%)] logo-badge-360">
-            E
-          </div>
-          <span className="text-2xl sm:text-3xl font-display tracking-widest2 uppercase">
-            Ehsar
-          </span>
+        <Link to="/" className="flex items-center">
+          <img src="/logo.svg" alt="Ehsar - Style from head to toe" className="h-14 sm:h-16 w-auto" />
         </Link>
 
         <nav className="hidden lg:flex items-center gap-8 text-sm tracking-widest2 uppercase">

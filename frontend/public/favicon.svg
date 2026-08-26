@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <style>
+    .mono { font-family: 'Playfair Display', Georgia, serif; font-weight: 600; }
+  </style>
+
+  <circle cx="100" cy="100" r="98" fill="#111111" />
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#b08d57" stroke-width="1" />
+
+  <text x="100" y="128" class="mono" font-size="92" fill="#f5f2ed" text-anchor="middle">E</text>
+</svg>
