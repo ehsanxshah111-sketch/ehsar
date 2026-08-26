@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/axios.js";
 import { formatPKR } from "../../utils/currency.js";
+import { buildWhatsAppLink } from "../../utils/whatsapp.js";
 
 const STATUS_OPTIONS = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
 
@@ -169,7 +170,7 @@ const ManageOrders = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <label className="text-xs text-gray-500">Update status:</label>
                   <select
@@ -183,13 +184,25 @@ const ManageOrders = () => {
                     ))}
                   </select>
                 </div>
-                <button
-                  onClick={() => handleDelete(order._id)}
-                  disabled={updatingId === order._id}
-                  className="text-xs text-red-600 underline disabled:opacity-50"
-                >
-                  Delete Order
-                </button>
+                <div className="flex items-center gap-3">
+                  {order.shippingAddress?.phone && (
+                    <a
+                      href={buildWhatsAppLink(order)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-green-700 underline"
+                    >
+                      WhatsApp Customer
+                    </a>
+                  )}
+                  <button
+                    onClick={() => handleDelete(order._id)}
+                    disabled={updatingId === order._id}
+                    className="text-xs text-red-600 underline disabled:opacity-50"
+                  >
+                    Delete Order
+                  </button>
+                </div>
               </div>
             </div>
           ))}

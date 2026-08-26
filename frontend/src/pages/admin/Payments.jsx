@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../api/axios.js";
 import { formatPKR } from "../../utils/currency.js";
+import { buildWhatsAppLink } from "../../utils/whatsapp.js";
 import { ADMIN_DASHBOARD_PATH } from "../../adminConfig.js";
 
 const PAYMENT_LABELS = {
@@ -167,6 +168,16 @@ const Payments = () => {
                     View Screenshot
                   </button>
                 )}
+                {order.shippingAddress?.phone && (
+                  <a
+                    href={buildWhatsAppLink(order)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-green-700 underline"
+                  >
+                    WhatsApp Customer
+                  </a>
+                )}
                 <span
                   className={`uppercase tracking-wide ${
                     order.paymentStatus === "Verified"
@@ -181,7 +192,7 @@ const Payments = () => {
               </div>
 
               {order.paymentStatus === "Submitted" && (
-                <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
+                <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200">
                   <button
                     disabled={updatingId === order._id}
                     onClick={() => handlePaymentStatus(order._id, "Verified")}
@@ -196,6 +207,19 @@ const Payments = () => {
                   >
                     Reject
                   </button>
+                </div>
+              )}
+
+              {order.paymentStatus === "Verified" && order.shippingAddress?.phone && (
+                <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200">
+                  <a
+                    href={buildWhatsAppLink(order)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-primary text-xs px-4 py-2 bg-green-700 border-green-700 hover:bg-green-800"
+                  >
+                    Send Confirmation on WhatsApp
+                  </a>
                 </div>
               )}
             </div>
