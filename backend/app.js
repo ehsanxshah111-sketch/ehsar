@@ -11,6 +11,8 @@ import userRoutes from "./routes/userRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentSettingsRoutes from "./routes/paymentSettingsRoutes.js";
 import activityLogRoutes from "./routes/activityLogRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 // dotenv.config() and connectDB() both live here (not in server.js) because
 // Vercel's zero-config Express detection may load this file directly as the
@@ -51,6 +53,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/settings", paymentSettingsRoutes);
 app.use("/api/activity-logs", activityLogRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.get("/", (req, res) => res.send("Ehsar API is running"));
 

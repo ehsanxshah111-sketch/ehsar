@@ -1,5 +1,6 @@
 import express from "express";
 import Order from "../models/Order.js";
+import Product from "../models/Product.js";
 import { protectUser } from "../middleware/userAuth.js";
 import { protect } from "../middleware/auth.js";
 import { logActivity } from "../utils/activityLogger.js";
@@ -49,15 +50,47 @@ router.post("/", protectUser, async (req, res) => {
     // tampered request can't place an order for less than it should cost.
     const totalAmount = items.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-    const order = await Order.create({
-      user: req.customer._id,
-      items,
-      shippingAddress,
-      totalAmount,
-      paymentMethod,
-      transactionId: transactionId.trim(),
-      paymentScreenshot,
-    });
+    // Reserve stock atomically per line item before the order is created.
+    // Each decrement is conditioned on stock >= qty, so two customers racing
+    // for the last unit can't both succeed. If any item runs out partway
+    // through, everything already decremented in this order is put back
+    // before we respond, so a failed order never leaves stock short.
+    const decremented = [];
+    for (const item of items) {
+      const updated = await Product.findOneAndUpdate(
+        { _id: item.product, stock: { $gte: item.qty } },
+        { $inc: { stock: -item.qty } },
+        { new: true }
+      );
+      if (!updated) {
+        for (const rollback of decremented) {
+          await Product.findByIdAndUpdate(rollback.product, { $inc: { stock: rollback.qty } });
+        }
+        return res.status(400).json({
+          message: `"${item.name}" doesn't have enough stock left. Please update your cart and try again.`,
+        });
+      }
+      decremented.push({ product: item.product, qty: item.qty });
+    }
+
+    let order;
+    try {
+      order = await Order.create({
+        user: req.customer._id,
+        items,
+        shippingAddress,
+        totalAmount,
+        paymentMethod,
+        transactionId: transactionId.trim(),
+        paymentScreenshot,
+      });
+    } catch (createErr) {
+      // Order failed to save after stock was already reserved - put it back.
+      for (const rollback of decremented) {
+        await Product.findByIdAndUpdate(rollback.product, { $inc: { stock: rollback.qty } });
+      }
+      throw createErr;
+    }
 
     res.status(201).json(order);
   } catch (err) {
@@ -142,8 +175,18 @@ router.put("/:id/status", protect, async (req, res) => {
     if (!allowed.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
+    const existing = await Order.findById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Order not found" });
+
+    // Cancelling an order releases the stock it reserved, but only once -
+    // otherwise re-saving an already-cancelled order would keep adding it back.
+    if (status === "Cancelled" && existing.status !== "Cancelled") {
+      for (const item of existing.items) {
+        await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.qty } });
+      }
+    }
+
     const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
-    if (!order) return res.status(404).json({ message: "Order not found" });
     await logActivity(
       req.admin.username,
       "Order Status Updated",

@@ -4,6 +4,7 @@ import { useCart } from "../context/CartContext.jsx";
 import { useCustomerAuth } from "../context/CustomerAuthContext.jsx";
 import customerApi from "../api/customerAxios.js";
 import { formatPKR } from "../utils/currency.js";
+import Breadcrumbs from "../components/Breadcrumbs.jsx";
 
 const MAX_SCREENSHOT_BYTES = 1_000_000; // ~1MB, matches the backend cap
 const PAYMENT_METHODS = ["JazzCash", "Easypaisa", "BankTransfer"];
@@ -130,14 +131,18 @@ const Cart = () => {
   if (items.length === 0) {
     return (
       <div className="container-ehsar py-24 text-center">
+        <Breadcrumbs items={[{ label: "Shopping Bag" }]} />
         <h1 className="section-title">Your Bag is Empty</h1>
+        <p className="text-gray-400 mb-6 text-sm">Looks like you haven't added anything yet.</p>
         <Link to="/shop" className="btn-primary">Start Shopping</Link>
       </div>
     );
   }
 
   return (
-    <div className="container-ehsar py-14 grid grid-cols-1 lg:grid-cols-3 gap-12">
+    <div className="container-ehsar py-14">
+      <Breadcrumbs items={[{ label: "Shopping Bag" }]} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
       <div className="lg:col-span-2">
         <h1 className="text-2xl font-display uppercase tracking-widest2 mb-8">Shopping Bag</h1>
         <div className="space-y-6">
@@ -330,6 +335,7 @@ const Cart = () => {
             </button>
           </form>
         )}
+      </div>
       </div>
     </div>
   );

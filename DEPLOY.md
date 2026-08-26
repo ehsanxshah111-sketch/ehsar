@@ -48,6 +48,9 @@ Directory** each.
    | `JWT_SECRET` | a long random string - generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
    | `CLIENT_URL` | leave blank for now - you'll add this after step 3, once you know the frontend's URL |
    | `ADMIN_SEED_USERNAME` | your choice, e.g. `admin` |
+   | `CLOUDINARY_CLOUD_NAME` | optional - only needed for the "Upload Images" button in the admin panel. Free account at cloudinary.com → Dashboard. Without it, admins can still add products by pasting image URLs. |
+   | `CLOUDINARY_API_KEY` | from the same Cloudinary dashboard |
+   | `CLOUDINARY_API_SECRET` | from the same Cloudinary dashboard |
    | `ADMIN_SEED_PASSWORD` | your choice, a strong password |
 
 5. Deploy. Once it finishes, **copy the URL it gives you** (something like

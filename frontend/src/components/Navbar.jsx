@@ -1,12 +1,45 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
+import { useWishlist } from "../context/WishlistContext.jsx";
 import { useCustomerAuth } from "../context/CustomerAuthContext.jsx";
+
+const TYPES = [
+  { label: "All", type: "" },
+  { label: "Clothing", type: "clothing" },
+  { label: "Shoes", type: "shoes" },
+  { label: "Watches", type: "watches" },
+];
+
+// Desktop dropdown for Women/Men - hover reveals Clothing / Shoes / Watches
+// sub-links so the new lines don't get buried in with the existing catalog.
+const CategoryDropdown = ({ label, category }) => (
+  <div className="relative group">
+    <Link to={`/shop?category=${category}`} className="hover:text-ehsar-gold transition-colors">
+      {label}
+    </Link>
+    <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 z-50">
+      <div className="bg-white border border-gray-200 shadow-lg py-2 min-w-[160px] normal-case tracking-normal text-left">
+        {TYPES.map((t) => (
+          <Link
+            key={t.label}
+            to={`/shop?category=${category}${t.type ? `&type=${t.type}` : ""}`}
+            className="block px-4 py-2 text-xs uppercase tracking-wide hover:bg-ehsar-cream hover:text-ehsar-gold"
+          >
+            {t.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const Navbar = () => {
   const { count } = useCart();
+  const { count: wishlistCount } = useWishlist();
   const { isAuthenticated, customer, logout } = useCustomerAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(null); // "women" | "men" | null
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
@@ -21,6 +54,11 @@ const Navbar = () => {
       navigate(`/shop?search=${encodeURIComponent(search.trim())}`);
       setSearch("");
     }
+  };
+
+  const closeMobile = () => {
+    setMenuOpen(false);
+    setMobileExpanded(null);
   };
 
   return (
@@ -42,8 +80,8 @@ const Navbar = () => {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-8 text-sm tracking-widest2 uppercase">
-          <Link to="/shop?category=women" className="hover:text-ehsar-gold transition-colors">Women</Link>
-          <Link to="/shop?category=men" className="hover:text-ehsar-gold transition-colors">Men</Link>
+          <CategoryDropdown label="Women" category="women" />
+          <CategoryDropdown label="Men" category="men" />
           <Link to="/shop?isNew=true" className="hover:text-ehsar-gold transition-colors">New In</Link>
           <Link to="/shop?sale=true" className="hover:text-ehsar-gold transition-colors">Sale</Link>
           {isAuthenticated ? (
@@ -69,6 +107,16 @@ const Navbar = () => {
               className="text-sm py-1 px-1 outline-none w-32"
             />
           </form>
+          <Link to="/wishlist" className="relative hidden sm:block" aria-label="Wishlist">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M12 21s-7.5-4.6-10.2-9.1C.2 8.9 1.4 5 5 4.2c2.1-.5 4 .5 5 2.3.9-1.8 2.9-2.8 5-2.3 3.6.8 4.8 4.7 3.2 7.7C19.5 16.4 12 21 12 21z" />
+            </svg>
+            {wishlistCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-ehsar-gold text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
           <Link to="/cart" className="relative" aria-label="Cart">
             <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M4 7h16l-1.5 11a2 2 0 01-2 1.8H7.5a2 2 0 01-2-1.8L4 7z" />
@@ -84,18 +132,44 @@ const Navbar = () => {
       </div>
 
       {menuOpen && (
-        <nav className="lg:hidden border-t border-gray-200 px-5 py-4 flex flex-col gap-4 text-sm tracking-widest2 uppercase">
-          <Link to="/shop?category=women" onClick={() => setMenuOpen(false)}>Women</Link>
-          <Link to="/shop?category=men" onClick={() => setMenuOpen(false)}>Men</Link>
-          <Link to="/shop?isNew=true" onClick={() => setMenuOpen(false)}>New In</Link>
-          <Link to="/shop?sale=true" onClick={() => setMenuOpen(false)}>Sale</Link>
+        <nav className="lg:hidden border-t border-gray-200 px-5 py-4 flex flex-col gap-1 text-sm tracking-widest2 uppercase">
+          {["women", "men"].map((cat) => (
+            <div key={cat}>
+              <div className="flex items-center justify-between py-2">
+                <Link to={`/shop?category=${cat}`} onClick={closeMobile}>
+                  {cat === "women" ? "Women" : "Men"}
+                </Link>
+                <button
+                  aria-label={`Toggle ${cat} types`}
+                  onClick={() => setMobileExpanded(mobileExpanded === cat ? null : cat)}
+                  className="text-xs px-2"
+                >
+                  {mobileExpanded === cat ? "−" : "+"}
+                </button>
+              </div>
+              {mobileExpanded === cat && (
+                <div className="pl-4 pb-2 flex flex-col gap-2 normal-case text-xs text-gray-500">
+                  {TYPES.filter((t) => t.type).map((t) => (
+                    <Link key={t.type} to={`/shop?category=${cat}&type=${t.type}`} onClick={closeMobile}>
+                      {t.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          <Link to="/shop?isNew=true" onClick={closeMobile} className="py-2">New In</Link>
+          <Link to="/shop?sale=true" onClick={closeMobile} className="py-2">Sale</Link>
+          <Link to="/wishlist" onClick={closeMobile} className="py-2">
+            Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+          </Link>
           {isAuthenticated ? (
             <>
-              <Link to="/my-orders" onClick={() => setMenuOpen(false)}>My Orders</Link>
+              <Link to="/my-orders" onClick={closeMobile} className="py-2">My Orders</Link>
               <button
-                className="text-left"
+                className="text-left py-2"
                 onClick={() => {
-                  setMenuOpen(false);
+                  closeMobile();
                   handleLogout();
                 }}
               >
@@ -103,7 +177,7 @@ const Navbar = () => {
               </button>
             </>
           ) : (
-            <Link to="/login" onClick={() => setMenuOpen(false)}>Login</Link>
+            <Link to="/login" onClick={closeMobile} className="py-2">Login</Link>
           )}
         </nav>
       )}

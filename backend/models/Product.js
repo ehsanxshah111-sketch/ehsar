@@ -7,6 +7,7 @@ const productSchema = new mongoose.Schema(
     price: { type: Number, required: true },
     discountPrice: { type: Number, default: null },
     category: { type: String, enum: ["men", "women"], required: true },
+    type: { type: String, enum: ["clothing", "shoes", "watches"], default: "clothing" },
     subCategory: { type: String, default: "General" },
     sizes: { type: [String], default: ["S", "M", "L", "XL"] },
     colors: { type: [String], default: [] },

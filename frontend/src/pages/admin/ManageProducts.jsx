@@ -8,6 +8,7 @@ const emptyForm = {
   price: "",
   discountPrice: "",
   category: "women",
+  type: "clothing",
   subCategory: "",
   sizes: "S, M, L, XL",
   colors: "",
@@ -18,6 +19,15 @@ const emptyForm = {
   isOnSale: false,
 };
 
+// Default size suggestions per product type - purely a helper hint for the
+// admin filling the form, not a validation rule (the sizes field stays free
+// text either way, since shoe sizing varies by brand/region).
+const SIZE_HINTS = {
+  clothing: "S, M, L, XL",
+  shoes: "38, 39, 40, 41, 42",
+  watches: "",
+};
+
 const ManageProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +35,9 @@ const ManageProducts = () => {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
 
   const loadProducts = async () => {
     setLoading(true);
@@ -47,6 +60,7 @@ const ManageProducts = () => {
     setEditingId(null);
     setShowForm(true);
     setError("");
+    setUploadError("");
   };
 
   const openEditForm = (p) => {
@@ -56,6 +70,7 @@ const ManageProducts = () => {
       price: p.price,
       discountPrice: p.discountPrice || "",
       category: p.category,
+      type: p.type || "clothing",
       subCategory: p.subCategory || "",
       sizes: (p.sizes || []).join(", "),
       colors: (p.colors || []).join(", "),
@@ -68,11 +83,48 @@ const ManageProducts = () => {
     setEditingId(p._id);
     setShowForm(true);
     setError("");
+    setUploadError("");
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const handleTypeChange = (e) => {
+    const nextType = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      type: nextType,
+      // Only auto-fill the size hint if the sizes field still holds another
+      // type's default - never clobber sizes the admin already typed in.
+      sizes: Object.values(SIZE_HINTS).includes(prev.sizes.trim())
+        ? SIZE_HINTS[nextType]
+        : prev.sizes,
+    }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploadError("");
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      files.forEach((f) => formData.append("images", f));
+      const { data } = await api.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setForm((prev) => ({
+        ...prev,
+        images: [prev.images, ...data.urls].filter(Boolean).join(", "),
+      }));
+    } catch (err) {
+      setUploadError(err?.response?.data?.message || "Upload failed. You can paste image URLs instead.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -84,6 +136,7 @@ const ManageProducts = () => {
       price: Number(form.price),
       discountPrice: form.discountPrice ? Number(form.discountPrice) : null,
       category: form.category,
+      type: form.type,
       subCategory: form.subCategory || "General",
       sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
       colors: form.colors.split(",").map((c) => c.trim()).filter(Boolean),
@@ -117,6 +170,8 @@ const ManageProducts = () => {
     }
   };
 
+  const visibleProducts = typeFilter ? products.filter((p) => (p.type || "clothing") === typeFilter) : products;
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -140,6 +195,18 @@ const ManageProducts = () => {
               </select>
             </div>
             <div>
+              <label className="text-xs uppercase text-gray-500 mb-1 block">Product Type *</label>
+              <select name="type" value={form.type} onChange={handleTypeChange} className="input-field">
+                <option value="clothing">Clothing</option>
+                <option value="shoes">Shoes</option>
+                <option value="watches">Watches</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs uppercase text-gray-500 mb-1 block">Sub-category</label>
+              <input name="subCategory" value={form.subCategory} onChange={handleChange} placeholder="e.g. Shirts, Sneakers, Chronograph" className="input-field" />
+            </div>
+            <div>
               <label className="text-xs uppercase text-gray-500 mb-1 block">Price (PKR) *</label>
               <input name="price" type="number" step="1" value={form.price} onChange={handleChange} className="input-field" required />
             </div>
@@ -148,15 +215,14 @@ const ManageProducts = () => {
               <input name="discountPrice" type="number" step="1" value={form.discountPrice} onChange={handleChange} className="input-field" />
             </div>
             <div>
-              <label className="text-xs uppercase text-gray-500 mb-1 block">Sub-category</label>
-              <input name="subCategory" value={form.subCategory} onChange={handleChange} placeholder="e.g. Shirts, Dresses" className="input-field" />
-            </div>
-            <div>
               <label className="text-xs uppercase text-gray-500 mb-1 block">Stock</label>
               <input name="stock" type="number" value={form.stock} onChange={handleChange} className="input-field" />
             </div>
             <div>
-              <label className="text-xs uppercase text-gray-500 mb-1 block">Sizes (comma separated)</label>
+              <label className="text-xs uppercase text-gray-500 mb-1 block">
+                Sizes (comma separated){form.type === "shoes" && " — use numeric EU/UK sizes"}
+                {form.type === "watches" && " — usually leave blank"}
+              </label>
               <input name="sizes" value={form.sizes} onChange={handleChange} className="input-field" />
             </div>
             <div>
@@ -164,8 +230,30 @@ const ManageProducts = () => {
               <input name="colors" value={form.colors} onChange={handleChange} className="input-field" />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-xs uppercase text-gray-500 mb-1 block">Image URLs (comma separated)</label>
+              <label className="text-xs uppercase text-gray-500 mb-1 block">Product Images</label>
+              <div className="flex flex-wrap items-center gap-3 mb-2">
+                <label className="btn-outline text-xs py-2 px-4 cursor-pointer">
+                  {uploading ? "Uploading..." : "Upload Images"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
+                <span className="text-xs text-gray-400">or paste URLs below</span>
+              </div>
+              {uploadError && <p className="text-red-600 text-xs mb-2">{uploadError}</p>}
               <input name="images" value={form.images} onChange={handleChange} placeholder="https://..., https://..." className="input-field" />
+              {form.images && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {form.images.split(",").map((url) => url.trim()).filter(Boolean).map((url, i) => (
+                    <img key={i} src={url} alt="" className="w-14 h-18 object-cover bg-ehsar-cream border border-gray-200" />
+                  ))}
+                </div>
+              )}
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs uppercase text-gray-500 mb-1 block">Description</label>
@@ -201,12 +289,23 @@ const ManageProducts = () => {
         </div>
       )}
 
+      <div className="flex items-center gap-4 mb-4">
+        <label className="text-xs uppercase text-gray-500">Filter by type:</label>
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="input-field w-40 py-1.5">
+          <option value="">All</option>
+          <option value="clothing">Clothing</option>
+          <option value="shoes">Shoes</option>
+          <option value="watches">Watches</option>
+        </select>
+      </div>
+
       <div className="admin-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
               <th className="p-4">Product</th>
               <th className="p-4">Category</th>
+              <th className="p-4">Type</th>
               <th className="p-4">Price</th>
               <th className="p-4">Stock</th>
               <th className="p-4">Flags</th>
@@ -215,11 +314,11 @@ const ManageProducts = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="6" className="p-6 text-center text-gray-400">Loading...</td></tr>
-            ) : products.length === 0 ? (
-              <tr><td colSpan="6" className="p-6 text-center text-gray-400">No products yet.</td></tr>
+              <tr><td colSpan="7" className="p-6 text-center text-gray-400">Loading...</td></tr>
+            ) : visibleProducts.length === 0 ? (
+              <tr><td colSpan="7" className="p-6 text-center text-gray-400">No products yet.</td></tr>
             ) : (
-              products.map((p) => (
+              visibleProducts.map((p) => (
                 <tr key={p._id} className="border-b border-gray-100">
                   <td className="p-4 flex items-center gap-3">
                     <img
@@ -230,6 +329,7 @@ const ManageProducts = () => {
                     <span>{p.name}</span>
                   </td>
                   <td className="p-4 capitalize">{p.category}</td>
+                  <td className="p-4 capitalize">{p.type || "clothing"}</td>
                   <td className="p-4">
                     {p.isOnSale && p.discountPrice ? (
                       <>
@@ -240,7 +340,9 @@ const ManageProducts = () => {
                       formatPKR(p.price)
                     )}
                   </td>
-                  <td className="p-4">{p.stock}</td>
+                  <td className="p-4">
+                    {p.stock <= 0 ? <span className="text-red-600">Out of stock</span> : p.stock}
+                  </td>
                   <td className="p-4 text-xs text-gray-500 space-x-1">
                     {p.isFeatured && <span className="bg-gray-100 px-2 py-0.5 rounded">Featured</span>}
                     {p.isNew && <span className="bg-gray-100 px-2 py-0.5 rounded">New</span>}

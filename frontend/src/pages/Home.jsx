@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../api/axios.js";
 import BannerCarousel from "../components/BannerCarousel.jsx";
 import ProductCard from "../components/ProductCard.jsx";
+import ProductGridSkeleton from "../components/ProductGridSkeleton.jsx";
 
 const Home = () => {
   const [banners, setBanners] = useState([]);
@@ -34,7 +35,7 @@ const Home = () => {
       <section className="container-ehsar py-20">
         <h2 className="section-title">Featured Pieces</h2>
         {loading ? (
-          <p className="text-center text-gray-400">Loading...</p>
+          <ProductGridSkeleton count={8} />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             {featured.slice(0, 8).map((p) => (

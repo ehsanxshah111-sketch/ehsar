@@ -5,12 +5,13 @@ import { logActivity } from "../utils/activityLogger.js";
 
 const router = express.Router();
 
-// GET /api/products  (public) - supports ?category=men|women&subCategory=&search=&featured=true&sale=true
+// GET /api/products  (public) - supports ?category=men|women&type=clothing|shoes|watches&subCategory=&search=&featured=true&sale=true
 router.get("/", async (req, res) => {
   try {
-    const { category, subCategory, search, featured, sale, isNew } = req.query;
+    const { category, type, subCategory, search, featured, sale, isNew } = req.query;
     const filter = {};
     if (category) filter.category = category;
+    if (type) filter.type = type;
     if (subCategory) filter.subCategory = subCategory;
     if (featured === "true") filter.isFeatured = true;
     if (sale === "true") filter.isOnSale = true;

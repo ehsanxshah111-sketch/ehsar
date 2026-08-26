@@ -30,7 +30,7 @@ const Footer = () => (
         <h4 className="text-xs tracking-widest2 uppercase text-gray-400 mb-4">Support</h4>
         <ul className="space-y-2 text-sm">
           <li><span className="text-gray-400">Shipping & Returns</span></li>
-          <li><span className="text-gray-400">Size Guide</span></li>
+          <li><Link to="/size-guide" className="hover:text-ehsar-gold">Size Guide</Link></li>
           <li><span className="text-gray-400">Contact Us</span></li>
         </ul>
       </div>

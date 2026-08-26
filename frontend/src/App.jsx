@@ -6,6 +6,8 @@ import Home from "./pages/Home.jsx";
 import Shop from "./pages/Shop.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
 import Cart from "./pages/Cart.jsx";
+import Wishlist from "./pages/Wishlist.jsx";
+import SizeGuide from "./pages/SizeGuide.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import MyOrders from "./pages/MyOrders.jsx";
@@ -40,6 +42,8 @@ function App() {
       <Route path="/shop" element={<PublicLayout><Shop /></PublicLayout>} />
       <Route path="/product/:id" element={<PublicLayout><ProductDetail /></PublicLayout>} />
       <Route path="/cart" element={<PublicLayout><Cart /></PublicLayout>} />
+      <Route path="/wishlist" element={<PublicLayout><Wishlist /></PublicLayout>} />
+      <Route path="/size-guide" element={<PublicLayout><SizeGuide /></PublicLayout>} />
       <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
       <Route path="/register" element={<PublicLayout><Register /></PublicLayout>} />
       <Route
