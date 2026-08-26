@@ -1,97 +1,133 @@
-# Deploying Ehsar to Vercel
+# Deploying Ehsar to Vercel (two separate projects)
 
-This project deploys as **one Vercel project** using [Vercel Services](https://vercel.com/docs/services) —
-your frontend and backend both run under a single domain, so there's no
-CORS setup to worry about in production.
+The frontend and backend deploy as **two independent Vercel projects**,
+each with its own URL. This is simpler and more reliable than trying to
+serve both from one domain - each project is just a plain, standard
+deployment Vercel already knows how to handle correctly with no custom
+routing config to get wrong.
 
 ```
 ehsar-mern/
-  vercel.json        <- defines both services and how traffic is routed
-  frontend/          <- Vite React app, served at /
-  backend/           <- Express API, served at /api/*
+  backend/
+    api/index.js     <- Vercel auto-detects this as the serverless function
+    vercel.json       <- routes every path to that one function
+    app.js            <- your actual Express app, unchanged
+  frontend/
+    (plain Vite app - Vercel's zero-config Vite handling
+     already does SPA routing correctly, no vercel.json needed here)
 ```
 
-You'll also need a MongoDB database reachable from the internet — Vercel
-doesn't host databases. Use a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster (M0 tier is enough to start).
+You'll deploy these as **two separate "Add New Project" imports** in
+Vercel, both pointing at the same GitHub repo but with a different **Root
+Directory** each.
 
 ---
 
-## 1. Set up MongoDB Atlas
+## 1. MongoDB Atlas (same as before, if you've already done this, skip)
 
-1. Create a free cluster at mongodb.com/cloud/atlas.
-2. Under **Network Access**, add `0.0.0.0/0` (allow access from anywhere) —
-   Vercel doesn't have fixed outbound IPs, so you can't allowlist a
-   specific one.
-3. Under **Database Access**, create a database user with a password.
-4. Get your connection string from **Connect → Drivers**:
-   `mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/ehsar?retryWrites=true&w=majority`
+1. Free cluster at mongodb.com/cloud/atlas.
+2. **Network Access** → allow `0.0.0.0/0` (Vercel has no fixed IP).
+3. **Database Access** → create a user + password.
+4. Copy the connection string from **Connect → Drivers**, and make sure it
+   has a database name in it: `.../ehsar?retryWrites=true&w=majority`.
 
 ---
 
-## 2. Push to GitHub
+## 2. Deploy the backend first
 
-Commit and push this whole `ehsar-mern` folder (including the root
-`vercel.json`) to a GitHub repo.
+1. Vercel → **Add New Project** → import your repo.
+2. **Root Directory: `backend`** (click Edit next to it, select the
+   `backend` folder specifically).
+3. Framework Preset: it should auto-detect as "Other" / Node - that's
+   correct, leave it.
+4. Add these Environment Variables (Production checked for all):
 
----
+   | Variable | Value |
+   |---|---|
+   | `MONGO_URI` | your Atlas connection string |
+   | `JWT_SECRET` | a long random string - generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+   | `CLIENT_URL` | leave blank for now - you'll add this after step 3, once you know the frontend's URL |
+   | `ADMIN_SEED_USERNAME` | your choice, e.g. `admin` |
+   | `ADMIN_SEED_PASSWORD` | your choice, a strong password |
 
-## 3. Import into Vercel
-
-1. **Add New → Project**, import your repo.
-2. Vercel should detect `vercel.json` at the repo root and show both
-   `frontend` and `backend` as services automatically — this is the
-   screen where it lists them as "Web Service" / Vite and Express.
-3. Leave **Root Directory** as `./` (the root `vercel.json` handles
-   routing to each service's own folder — don't point Root Directory at
-   `frontend` or `backend` individually).
-4. Open **Environment Variables** and add everything from the table
-   below.
-5. Click **Deploy**.
-
-### Environment variables (set once, shared across both services)
-
-| Variable | Value | Notes |
-|---|---|---|
-| `MONGO_URI` | your Atlas connection string | include the database name, e.g. `/ehsar` before the `?` |
-| `JWT_SECRET` | a long random string | generate your own — don't reuse an example value in production |
-| `ADMIN_SEED_USERNAME` | your choice, e.g. `admin` | only used by the one-time seed script |
-| `ADMIN_SEED_PASSWORD` | your choice, a strong password | only used by the one-time seed script |
-| `VITE_API_URL` | `/api` | relative path — works because frontend and backend now share one domain |
-
-`PORT` and `CLIENT_URL` are **not needed** for this setup — Vercel sets
-`PORT` itself for the backend service, and CORS doesn't come into play
-since requests are same-origin in production.
+5. Deploy. Once it finishes, **copy the URL it gives you** (something like
+   `https://ehsar-backend-xyz.vercel.app`). Visit it in a browser - you
+   should see the plain text "Ehsar API is running". That confirms the
+   function itself works, before you even touch the frontend.
 
 ---
 
-## 4. Creating your admin account
+## 3. Deploy the frontend
 
-The seed script (`npm run seed`) creates the first admin account. Run it
-**locally**, pointed at your production database, once:
+1. Vercel → **Add New Project** → import the **same repo** again.
+2. **Root Directory: `frontend`**.
+3. Framework Preset should auto-detect as **Vite** - leave it as-is,
+   don't override it.
+4. Add this Environment Variable:
 
-```bash
+   | Variable | Value |
+   |---|---|
+   | `VITE_API_URL` | `https://ehsar-backend-xyz.vercel.app/api` (your actual backend URL from step 2, with `/api` on the end) |
+
+5. Deploy. Copy this URL too (something like `https://ehsar-pearl.vercel.app`).
+
+---
+
+## 4. Connect the two: update the backend's CORS setting
+
+1. Go back to the **backend** project → Settings → Environment Variables.
+2. Edit `CLIENT_URL` and set it to your actual frontend URL from step 3,
+   e.g. `https://ehsar-pearl.vercel.app` (no trailing slash).
+3. **Redeploy the backend** (Deployments tab → ⋯ on the latest one →
+   Redeploy) - environment variable changes don't apply until you redeploy.
+
+---
+
+## 5. Create your admin account
+
+Run this locally, pointed at your Atlas database (same one the backend
+uses in production):
+
+```powershell
 cd backend
-MONGO_URI="your-atlas-connection-string" ADMIN_SEED_USERNAME=admin ADMIN_SEED_PASSWORD="your-strong-password" npm run seed
+$env:MONGO_URI="your-atlas-connection-string"
+$env:ADMIN_SEED_USERNAME="admin"
+$env:ADMIN_SEED_PASSWORD="YourStrongPassword123"
+node utils/createAdmin.js
 ```
+
+It prints the username/password to confirm, and is safe to run again
+later to reset your password - it never touches products, orders, or
+anything else.
 
 ---
 
-## 5. After deploying
+## 6. Test it end to end
 
-- Visit your Vercel domain and confirm products/banners load.
-- Log into the admin panel at `/ehsar-control-x7q9` with the account you
-  seeded, then set your JazzCash/Easypaisa/Bank Transfer numbers under
-  **Payment Settings**.
-- If the API doesn't respond, check the backend service's logs in the
-  Vercel dashboard for a `MONGO_URI` connection error first — that's the
-  most common cause.
+1. Visit your frontend URL → confirm products/banners load (this proves
+   `VITE_API_URL` is correct and CORS is happy).
+2. Visit `https://your-frontend-url/ehsar-control-x7q9` directly (typed
+   straight into the address bar, not clicked from within the site) - it
+   should load the login form, not a 404. Vite's zero-config SPA handling
+   takes care of this automatically now.
+3. Log in with the account from step 5.
+4. Open DevTools → Network tab if anything fails - the exact status code
+   and response body tells us precisely what's wrong instead of guessing:
+   - **CORS error in the console** → `CLIENT_URL` on the backend doesn't
+     exactly match your frontend's real URL, or you forgot to redeploy
+     the backend after changing it.
+   - **404 on the login request** → `VITE_API_URL` is wrong, or you
+     forgot to redeploy the *frontend* after setting/changing it (Vite
+     bakes env vars in at build time, so this one especially needs a
+     fresh deploy to take effect).
+   - **401 with "Invalid credentials"** → this one's real - the username/
+     password genuinely don't match. Re-run `createAdmin.js`.
+   - **500 error** → check the backend project's Function Logs in the
+     Vercel dashboard for the actual error, usually a `MONGO_URI` problem.
 
 ---
 
 ## Local development is unchanged
 
-`npm run dev` in each folder still works exactly as before — the backend
-listens on `PORT` (default 5000) via `server.js`, and the frontend talks
-to `http://localhost:5000/api` unless you set `VITE_API_URL` in a local
-`.env` file (leave it unset locally, or set it to
-`http://localhost:5000/api`).
+Nothing about `npm run dev` in either folder changes - this only affects
+how the two are deployed to Vercel, not how you develop locally.
