@@ -19,6 +19,7 @@ import ManageProducts from "./pages/admin/ManageProducts.jsx";
 import ManageOrders from "./pages/admin/ManageOrders.jsx";
 import Payments from "./pages/admin/Payments.jsx";
 import ManageBanners from "./pages/admin/ManageBanners.jsx";
+import ManageCategoryTiles from "./pages/admin/ManageCategoryTiles.jsx";
 import ManagePaymentSettings from "./pages/admin/ManagePaymentSettings.jsx";
 import ActivityLog from "./pages/admin/ActivityLog.jsx";
 import Customers from "./pages/admin/Customers.jsx";
@@ -74,6 +75,7 @@ function App() {
         <Route path="orders" element={<ManageOrders />} />
         <Route path="payments" element={<Payments />} />
         <Route path="banners" element={<ManageBanners />} />
+        <Route path="category-tiles" element={<ManageCategoryTiles />} />
         <Route path="payment-settings" element={<ManagePaymentSettings />} />
         <Route path="activity-log" element={<ActivityLog />} />
         <Route path="customers" element={<Customers />} />

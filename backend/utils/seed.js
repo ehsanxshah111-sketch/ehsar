@@ -4,6 +4,7 @@ import connectDB from "../config/db.js";
 import Admin from "../models/Admin.js";
 import Product from "../models/Product.js";
 import Banner from "../models/Banner.js";
+import CategoryTile from "../models/CategoryTile.js";
 
 dotenv.config();
 
@@ -122,6 +123,13 @@ const banners = [
   },
 ];
 
+const categoryTiles = [
+  { label: "Women", image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200", linkUrl: "/shop?category=women", order: 0 },
+  { label: "Men", image: "https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=1200", linkUrl: "/shop?category=men", order: 1 },
+  { label: "Shoes", image: "https://images.unsplash.com/photo-1551747777-458b63c6ae38?w=1200", linkUrl: "/shop?type=shoes", order: 2 },
+  { label: "Watches", image: "https://images.unsplash.com/photo-1628678172909-13a7209c7d62?w=1200", linkUrl: "/shop?type=watches", order: 3 },
+];
+
 const runSeed = async () => {
   await connectDB();
 
@@ -130,6 +138,17 @@ const runSeed = async () => {
   await Product.insertMany(products);
   await Banner.insertMany(banners);
   console.log("Products and banners seeded.");
+
+  // Category tiles are seeded only if none exist yet - unlike products and
+  // banners above, we don't want re-running this script to ever wipe out
+  // tiles the admin has already customized through the admin panel.
+  const existingTileCount = await CategoryTile.countDocuments();
+  if (existingTileCount === 0) {
+    await CategoryTile.insertMany(categoryTiles);
+    console.log("Category tiles seeded.");
+  } else {
+    console.log("Category tiles already exist, skipping.");
+  }
 
   const existingAdmin = await Admin.findOne({
     username: process.env.ADMIN_SEED_USERNAME || "admin",
