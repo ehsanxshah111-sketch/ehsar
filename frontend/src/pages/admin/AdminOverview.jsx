@@ -7,24 +7,47 @@ import { ADMIN_DASHBOARD_PATH } from "../../adminConfig.js";
 const AdminOverview = () => {
   const [stats, setStats] = useState({ products: 0, men: 0, women: 0, banners: 0 });
   const [payments, setPayments] = useState({ pending: 0, revenue: 0 });
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     const load = async () => {
-      try {
-        const [products, banners, summary] = await Promise.all([
-          api.get("/products"),
-          api.get("/banners/all"),
-          api.get("/orders/summary"),
-        ]);
-        setStats({
-          products: products.data.length,
-          men: products.data.filter((p) => p.category === "men").length,
-          women: products.data.filter((p) => p.category === "women").length,
-          banners: banners.data.length,
+      setLoadError("");
+      const [productsRes, bannersRes, summaryRes] = await Promise.allSettled([
+        api.get("/products"),
+        api.get("/banners/all"),
+        api.get("/orders/summary"),
+      ]);
+
+      if (productsRes.status === "fulfilled") {
+        const products = productsRes.value.data;
+        setStats((prev) => ({
+          ...prev,
+          products: products.length,
+          men: products.filter((p) => p.category === "men").length,
+          women: products.filter((p) => p.category === "women").length,
+        }));
+      }
+
+      if (bannersRes.status === "fulfilled") {
+        setStats((prev) => ({ ...prev, banners: bannersRes.value.data.length }));
+      }
+
+      if (summaryRes.status === "fulfilled") {
+        setPayments({
+          pending: summaryRes.value.data.pendingPayments,
+          revenue: summaryRes.value.data.verifiedRevenue,
         });
-        setPayments({ pending: summary.data.pendingPayments, revenue: summary.data.verifiedRevenue });
-      } catch (err) {
-        console.error(err);
+      }
+
+      const failed = [productsRes, bannersRes, summaryRes].find((r) => r.status === "rejected");
+      if (failed) {
+        console.error(failed.reason);
+        const status = failed.reason?.response?.status;
+        if (status === 401) {
+          setLoadError("Your admin session has expired. Please log out and log back in.");
+        } else {
+          setLoadError("Some dashboard data failed to load. Check your connection and try refreshing.");
+        }
       }
     };
     load();
@@ -40,6 +63,12 @@ const AdminOverview = () => {
   return (
     <div>
       <h1 className="text-2xl font-display uppercase tracking-wide mb-8">Overview</h1>
+
+      {loadError && (
+        <div className="admin-card p-4 mb-6 border-l-4 border-l-red-500 bg-red-50 text-sm text-red-700">
+          {loadError}
+        </div>
+      )}
 
       {payments.pending > 0 && (
         <Link
