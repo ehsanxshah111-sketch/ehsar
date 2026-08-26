@@ -45,7 +45,7 @@ const Home = () => {
         )}
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-2">
+      <section className="grid grid-cols-1 sm:grid-cols-2">
         <Link to="/shop?category=women" className="relative group h-[50vh] overflow-hidden block">
           <img
             src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200"
@@ -67,6 +67,30 @@ const Home = () => {
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
             <span className="text-white text-2xl tracking-widest2 uppercase border-b border-white pb-1">
               Men
+            </span>
+          </div>
+        </Link>
+        <Link to="/shop?type=shoes" className="relative group h-[50vh] overflow-hidden block">
+          <img
+            src="https://images.unsplash.com/photo-1551747777-458b63c6ae38?w=1200"
+            alt="Shoes Collection"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+            <span className="text-white text-2xl tracking-widest2 uppercase border-b border-white pb-1">
+              Shoes
+            </span>
+          </div>
+        </Link>
+        <Link to="/shop?type=watches" className="relative group h-[50vh] overflow-hidden block">
+          <img
+            src="https://images.unsplash.com/photo-1628678172909-13a7209c7d62?w=1200"
+            alt="Watches Collection"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+            <span className="text-white text-2xl tracking-widest2 uppercase border-b border-white pb-1">
+              Watches
             </span>
           </div>
         </Link>
