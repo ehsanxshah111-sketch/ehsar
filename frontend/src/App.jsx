@@ -15,6 +15,7 @@ import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminOverview from "./pages/admin/AdminOverview.jsx";
 import ManageProducts from "./pages/admin/ManageProducts.jsx";
 import ManageOrders from "./pages/admin/ManageOrders.jsx";
+import Payments from "./pages/admin/Payments.jsx";
 import ManageBanners from "./pages/admin/ManageBanners.jsx";
 import ManagePaymentSettings from "./pages/admin/ManagePaymentSettings.jsx";
 import ActivityLog from "./pages/admin/ActivityLog.jsx";
@@ -67,6 +68,7 @@ function App() {
         <Route index element={<AdminOverview />} />
         <Route path="products" element={<ManageProducts />} />
         <Route path="orders" element={<ManageOrders />} />
+        <Route path="payments" element={<Payments />} />
         <Route path="banners" element={<ManageBanners />} />
         <Route path="payment-settings" element={<ManagePaymentSettings />} />
         <Route path="activity-log" element={<ActivityLog />} />

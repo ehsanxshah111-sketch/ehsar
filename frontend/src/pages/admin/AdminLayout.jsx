@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { ADMIN_DASHBOARD_PATH, ADMIN_LOGIN_PATH } from "../../adminConfig.js";
+import api from "../../api/axios.js";
 
 const linkClass = ({ isActive }) =>
   `block px-4 py-3 text-sm tracking-wide rounded-sm ${
@@ -11,6 +12,19 @@ const linkClass = ({ isActive }) =>
 const AdminLayout = () => {
   const { username, logout } = useAuth();
   const navigate = useNavigate();
+  // Fetched once when the admin dashboard loads, so the sidebar can flag a
+  // payment that's waiting on review without the admin having to click into
+  // Payments first just to find out one exists.
+  const [pendingPayments, setPendingPayments] = useState(0);
+
+  useEffect(() => {
+    api
+      .get("/orders")
+      .then(({ data }) => {
+        setPendingPayments(data.filter((o) => o.paymentStatus === "Submitted").length);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -28,6 +42,16 @@ const AdminLayout = () => {
           <NavLink to={`${ADMIN_DASHBOARD_PATH}`} end className={linkClass}>Overview</NavLink>
           <NavLink to={`${ADMIN_DASHBOARD_PATH}/products`} className={linkClass}>Products</NavLink>
           <NavLink to={`${ADMIN_DASHBOARD_PATH}/orders`} className={linkClass}>Orders</NavLink>
+          <NavLink to={`${ADMIN_DASHBOARD_PATH}/payments`} className={linkClass}>
+            <span className="flex items-center justify-between">
+              Payments
+              {pendingPayments > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px]">
+                  {pendingPayments}
+                </span>
+              )}
+            </span>
+          </NavLink>
           <NavLink to={`${ADMIN_DASHBOARD_PATH}/customers`} className={linkClass}>Customers</NavLink>
           <NavLink to={`${ADMIN_DASHBOARD_PATH}/banners`} className={linkClass}>Banners</NavLink>
           <NavLink to={`${ADMIN_DASHBOARD_PATH}/payment-settings`} className={linkClass}>Payment Settings</NavLink>
