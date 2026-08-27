@@ -10,7 +10,7 @@ const router = express.Router();
 // recycling anyway.
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024, files: 6 }, // 5MB per image, up to 6 at once
+  limits: { fileSize: 5 * 1024 * 1024, files: 4 }, // 5MB per image, up to 4 at once
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
       return cb(new Error("Only image files are allowed"));
@@ -28,10 +28,10 @@ const uploadBufferToCloudinary = (buffer) =>
     stream.end(buffer);
   });
 
-// POST /api/upload  (admin only) - accepts up to 6 images under the field
+// POST /api/upload  (admin only) - accepts up to 4 images under the field
 // name "images" and returns their hosted Cloudinary URLs, ready to drop
 // straight into a product's images array.
-router.post("/", protect, upload.array("images", 6), async (req, res) => {
+router.post("/", protect, upload.array("images", 4), async (req, res) => {
   if (!isCloudinaryConfigured()) {
     return res.status(503).json({
       message:

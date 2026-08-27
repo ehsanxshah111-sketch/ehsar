@@ -11,7 +11,14 @@ const productSchema = new mongoose.Schema(
     subCategory: { type: String, default: "General" },
     sizes: { type: [String], default: ["S", "M", "L", "XL"] },
     colors: { type: [String], default: [] },
-    images: { type: [String], default: [] },
+    images: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: (arr) => arr.length <= 4,
+        message: "A product can have a maximum of 4 images.",
+      },
+    },
     stock: { type: Number, default: 50 },
     isFeatured: { type: Boolean, default: false },
     isNew: { type: Boolean, default: true },

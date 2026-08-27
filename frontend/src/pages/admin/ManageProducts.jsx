@@ -104,20 +104,37 @@ const ManageProducts = () => {
     }));
   };
 
+  const MAX_IMAGES = 4;
+
+  const currentImageList = (imagesStr) => imagesStr.split(",").map((s) => s.trim()).filter(Boolean);
+
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     setUploadError("");
+
+    const existing = currentImageList(form.images);
+    const remaining = MAX_IMAGES - existing.length;
+    if (remaining <= 0) {
+      setUploadError(`You can only have up to ${MAX_IMAGES} images per product. Remove one first.`);
+      e.target.value = "";
+      return;
+    }
+    const filesToUpload = files.slice(0, remaining);
+    if (files.length > remaining) {
+      setUploadError(`Only ${remaining} more image(s) allowed (max ${MAX_IMAGES} total) — the rest were skipped.`);
+    }
+
     setUploading(true);
     try {
       const formData = new FormData();
-      files.forEach((f) => formData.append("images", f));
+      filesToUpload.forEach((f) => formData.append("images", f));
       const { data } = await api.post("/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setForm((prev) => ({
         ...prev,
-        images: [prev.images, ...data.urls].filter(Boolean).join(", "),
+        images: [...existing, ...data.urls].filter(Boolean).join(", "),
       }));
     } catch (err) {
       setUploadError(err?.response?.data?.message || "Upload failed. You can paste image URLs instead.");
@@ -125,6 +142,11 @@ const ManageProducts = () => {
       setUploading(false);
       e.target.value = "";
     }
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    const remainingImages = currentImageList(form.images).filter((_, i) => i !== indexToRemove);
+    setForm((prev) => ({ ...prev, images: remainingImages.join(", ") }));
   };
 
   const handleSubmit = async (e) => {
@@ -140,7 +162,7 @@ const ManageProducts = () => {
       subCategory: form.subCategory || "General",
       sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
       colors: form.colors.split(",").map((c) => c.trim()).filter(Boolean),
-      images: form.images.split(",").map((i) => i.trim()).filter(Boolean),
+      images: form.images.split(",").map((i) => i.trim()).filter(Boolean).slice(0, MAX_IMAGES),
       stock: Number(form.stock) || 0,
       isFeatured: form.isFeatured,
       isNew: form.isNew,
@@ -230,27 +252,39 @@ const ManageProducts = () => {
               <input name="colors" value={form.colors} onChange={handleChange} className="input-field" />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-xs uppercase text-gray-500 mb-1 block">Product Images</label>
+              <label className="text-xs uppercase text-gray-500 mb-1 block">
+                Product Images ({currentImageList(form.images).length}/{MAX_IMAGES})
+              </label>
               <div className="flex flex-wrap items-center gap-3 mb-2">
-                <label className="btn-outline text-xs py-2 px-4 cursor-pointer">
+                <label className={`btn-outline text-xs py-2 px-4 cursor-pointer ${(uploading || currentImageList(form.images).length >= MAX_IMAGES) ? "opacity-50 pointer-events-none" : ""}`}>
                   {uploading ? "Uploading..." : "Upload Images"}
                   <input
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={handleImageUpload}
-                    disabled={uploading}
+                    disabled={uploading || currentImageList(form.images).length >= MAX_IMAGES}
                     className="hidden"
                   />
                 </label>
-                <span className="text-xs text-gray-400">or paste URLs below</span>
+                <span className="text-xs text-gray-400">or paste URLs below · max {MAX_IMAGES} photos, first one is the cover image</span>
               </div>
               {uploadError && <p className="text-red-600 text-xs mb-2">{uploadError}</p>}
               <input name="images" value={form.images} onChange={handleChange} placeholder="https://..., https://..." className="input-field" />
               {form.images && (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {form.images.split(",").map((url) => url.trim()).filter(Boolean).map((url, i) => (
-                    <img key={i} src={url} alt="" className="w-14 h-18 object-cover bg-ehsar-cream border border-gray-200" />
+                  {currentImageList(form.images).map((url, i) => (
+                    <div key={i} className="relative">
+                      <img src={url} alt="" className="w-14 h-18 object-cover bg-ehsar-cream border border-gray-200" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(i)}
+                        aria-label="Remove image"
+                        className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-ehsar-black text-white text-xs leading-none flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
