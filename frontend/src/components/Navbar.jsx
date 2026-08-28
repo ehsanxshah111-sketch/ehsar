@@ -4,23 +4,25 @@ import { useCart } from "../context/CartContext.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
 import { useCustomerAuth } from "../context/CustomerAuthContext.jsx";
 
-const TYPES = [
-  { label: "All", type: "" },
-  { label: "Clothing", type: "clothing" },
-  { label: "Shoes", type: "shoes" },
-  { label: "Watches", type: "watches" },
-];
+const ALL_TYPE = { label: "All", type: "" };
+const SHOES_TYPE = { label: "Shoes", type: "shoes" };
+const WATCHES_TYPE = { label: "Watches", type: "watches" };
 
-// Desktop dropdown for Women/Men - hover reveals Clothing / Shoes / Watches
+// Women and Men each get their own dropdown contents now, instead of one
+// shared list - Women shows Jewelry in place of Clothing.
+const WOMEN_TYPES = [ALL_TYPE, { label: "Jewelry", type: "jewelry" }, SHOES_TYPE, WATCHES_TYPE];
+const MEN_TYPES = [ALL_TYPE, { label: "Clothing", type: "clothing" }, SHOES_TYPE, WATCHES_TYPE];
+
+// Desktop dropdown for Women/Men - hover reveals that category's own set of
 // sub-links so the new lines don't get buried in with the existing catalog.
-const CategoryDropdown = ({ label, category }) => (
+const CategoryDropdown = ({ label, category, types }) => (
   <div className="relative group">
     <Link to={`/shop?category=${category}`} className="hover:text-ehsar-gold transition-colors">
       {label}
     </Link>
     <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 z-50">
       <div className="bg-white border border-gray-200 shadow-lg py-2 min-w-[160px] normal-case tracking-normal text-left">
-        {TYPES.map((t) => (
+        {types.map((t) => (
           <Link
             key={t.label}
             to={`/shop?category=${category}${t.type ? `&type=${t.type}` : ""}`}
@@ -75,8 +77,8 @@ const Navbar = () => {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-8 text-sm tracking-widest2 uppercase">
-          <CategoryDropdown label="Women" category="women" />
-          <CategoryDropdown label="Men" category="men" />
+          <CategoryDropdown label="Women" category="women" types={WOMEN_TYPES} />
+          <CategoryDropdown label="Men" category="men" types={MEN_TYPES} />
           <Link to="/shop?isNew=true" className="hover:text-ehsar-gold transition-colors">New In</Link>
           <Link to="/shop?sale=true" className="hover:text-ehsar-gold transition-colors">Sale</Link>
           {isAuthenticated ? (
@@ -144,7 +146,7 @@ const Navbar = () => {
               </div>
               {mobileExpanded === cat && (
                 <div className="pl-4 pb-2 flex flex-col gap-2 normal-case text-xs text-gray-500">
-                  {TYPES.filter((t) => t.type).map((t) => (
+                  {(cat === "women" ? WOMEN_TYPES : MEN_TYPES).filter((t) => t.type).map((t) => (
                     <Link key={t.type} to={`/shop?category=${cat}&type=${t.type}`} onClick={closeMobile}>
                       {t.label}
                     </Link>
