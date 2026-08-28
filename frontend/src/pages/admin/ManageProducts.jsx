@@ -26,6 +26,7 @@ const SIZE_HINTS = {
   clothing: "S, M, L, XL",
   shoes: "38, 39, 40, 41, 42",
   watches: "",
+  jewelry: "",
 };
 
 const ManageProducts = () => {
@@ -38,6 +39,7 @@ const ManageProducts = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   const loadProducts = async () => {
     setLoading(true);
@@ -74,7 +76,7 @@ const ManageProducts = () => {
       subCategory: p.subCategory || "",
       sizes: (p.sizes || []).join(", "),
       colors: (p.colors || []).join(", "),
-      images: (p.images || []).join(", "),
+      images: (p.images || []).join("\n"),
       stock: p.stock,
       isFeatured: p.isFeatured,
       isNew: p.isNew,
@@ -106,7 +108,13 @@ const ManageProducts = () => {
 
   const MAX_IMAGES = 4;
 
-  const currentImageList = (imagesStr) => imagesStr.split(",").map((s) => s.trim()).filter(Boolean);
+  // Split by newline, not comma - a huge number of real image URLs (every
+  // Cloudinary transformation URL, many other CDNs) legitimately contain
+  // commas as part of the URL itself, e.g. ".../w_800,h_800,c_fill/photo.jpg".
+  // Splitting on commas was silently shredding those into broken fragments,
+  // which is exactly why a pasted URL with that kind of text in it failed
+  // to load - it was never one URL by the time it got saved.
+  const currentImageList = (imagesStr) => imagesStr.split("\n").map((s) => s.trim()).filter(Boolean);
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -134,7 +142,7 @@ const ManageProducts = () => {
       });
       setForm((prev) => ({
         ...prev,
-        images: [...existing, ...data.urls].filter(Boolean).join(", "),
+        images: [...existing, ...data.urls].filter(Boolean).join("\n"),
       }));
     } catch (err) {
       setUploadError(err?.response?.data?.message || "Upload failed. You can paste image URLs instead.");
@@ -146,7 +154,7 @@ const ManageProducts = () => {
 
   const handleRemoveImage = (indexToRemove) => {
     const remainingImages = currentImageList(form.images).filter((_, i) => i !== indexToRemove);
-    setForm((prev) => ({ ...prev, images: remainingImages.join(", ") }));
+    setForm((prev) => ({ ...prev, images: remainingImages.join("\n") }));
   };
 
   const handleSubmit = async (e) => {
@@ -162,7 +170,7 @@ const ManageProducts = () => {
       subCategory: form.subCategory || "General",
       sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
       colors: form.colors.split(",").map((c) => c.trim()).filter(Boolean),
-      images: form.images.split(",").map((i) => i.trim()).filter(Boolean).slice(0, MAX_IMAGES),
+      images: form.images.split("\n").map((i) => i.trim()).filter(Boolean).slice(0, MAX_IMAGES),
       stock: Number(form.stock) || 0,
       isFeatured: form.isFeatured,
       isNew: form.isNew,
@@ -192,7 +200,11 @@ const ManageProducts = () => {
     }
   };
 
-  const visibleProducts = typeFilter ? products.filter((p) => (p.type || "clothing") === typeFilter) : products;
+  const visibleProducts = products.filter((p) => {
+    const matchesType = typeFilter ? (p.type || "clothing") === typeFilter : true;
+    const matchesCategory = categoryFilter ? p.category === categoryFilter : true;
+    return matchesType && matchesCategory;
+  });
 
   return (
     <div>
@@ -222,6 +234,7 @@ const ManageProducts = () => {
                 <option value="clothing">Clothing</option>
                 <option value="shoes">Shoes</option>
                 <option value="watches">Watches</option>
+                <option value="jewelry">Jewelry</option>
               </select>
             </div>
             <div>
@@ -243,7 +256,7 @@ const ManageProducts = () => {
             <div>
               <label className="text-xs uppercase text-gray-500 mb-1 block">
                 Sizes (comma separated){form.type === "shoes" && " — use numeric EU/UK sizes"}
-                {form.type === "watches" && " — usually leave blank"}
+                {(form.type === "watches" || form.type === "jewelry") && " — usually leave blank"}
               </label>
               <input name="sizes" value={form.sizes} onChange={handleChange} className="input-field" />
             </div>
@@ -267,10 +280,17 @@ const ManageProducts = () => {
                     className="hidden"
                   />
                 </label>
-                <span className="text-xs text-gray-400">or paste URLs below · max {MAX_IMAGES} photos, first one is the cover image</span>
+                <span className="text-xs text-gray-400">or paste URLs below, one per line · max {MAX_IMAGES} photos, first one is the cover image</span>
               </div>
               {uploadError && <p className="text-red-600 text-xs mb-2">{uploadError}</p>}
-              <input name="images" value={form.images} onChange={handleChange} placeholder="https://..., https://..." className="input-field" />
+              <textarea
+                name="images"
+                value={form.images}
+                onChange={handleChange}
+                placeholder={"https://example.com/photo1.jpg\nhttps://example.com/photo2.jpg"}
+                rows={3}
+                className="input-field"
+              />
               {form.images && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {currentImageList(form.images).map((url, i) => (
@@ -324,12 +344,19 @@ const ManageProducts = () => {
       )}
 
       <div className="flex items-center gap-4 mb-4">
+        <label className="text-xs uppercase text-gray-500">Filter by category:</label>
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="input-field w-32 py-1.5">
+          <option value="">All</option>
+          <option value="women">Women</option>
+          <option value="men">Men</option>
+        </select>
         <label className="text-xs uppercase text-gray-500">Filter by type:</label>
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="input-field w-40 py-1.5">
           <option value="">All</option>
           <option value="clothing">Clothing</option>
           <option value="shoes">Shoes</option>
           <option value="watches">Watches</option>
+          <option value="jewelry">Jewelry</option>
         </select>
       </div>
 

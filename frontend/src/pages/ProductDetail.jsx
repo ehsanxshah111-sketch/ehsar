@@ -201,12 +201,7 @@ const ProductDetail = () => {
 
           {product.sizes?.length > 0 && (
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs tracking-widest2 uppercase text-gray-500">Size</h4>
-                <Link to="/size-guide" className="text-xs text-gray-500 underline hover:text-ehsar-gold">
-                  Size Guide
-                </Link>
-              </div>
+              <h4 className="text-xs tracking-widest2 uppercase text-gray-500 mb-2">Size</h4>
               <div className="flex flex-wrap gap-2">
                 {product.sizes.map((s) => (
                   <button
