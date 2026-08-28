@@ -43,10 +43,13 @@ const orderSchema = new mongoose.Schema(
     // How the customer says they paid. There's no live gateway API here -
     // JazzCash/Easypaisa require a registered business merchant account to
     // integrate directly. Instead the customer sends money themselves and
-    // reports the transaction here, and the admin confirms it landed.
+    // reports the transaction here, and the admin confirms it landed. COD
+    // is the exception: nothing is sent in advance, so there's no
+    // transaction to report - the customer pays the rider in cash when the
+    // order arrives, and the admin marks payment received after that.
     paymentMethod: {
       type: String,
-      enum: ["JazzCash", "Easypaisa", "BankTransfer"],
+      enum: ["JazzCash", "Easypaisa", "BankTransfer", "COD"],
       required: true,
     },
     paymentStatus: {
@@ -54,10 +57,22 @@ const orderSchema = new mongoose.Schema(
       enum: ["Submitted", "Verified", "Rejected"],
       default: "Submitted",
     },
-    transactionId: { type: String, required: true },
-    // Small base64 screenshot of the payment confirmation - required, since
-    // this is the only proof the admin has to go on before verifying.
-    paymentScreenshot: { type: String, required: true },
+    // Required for the self-reported methods, but not for COD - there's no
+    // transaction ID or screenshot to give when nothing has been paid yet.
+    transactionId: {
+      type: String,
+      default: "",
+      required: function () {
+        return this.paymentMethod !== "COD";
+      },
+    },
+    paymentScreenshot: {
+      type: String,
+      default: "",
+      required: function () {
+        return this.paymentMethod !== "COD";
+      },
+    },
     paymentNote: { type: String, default: "" }, // admin's note if rejected, etc.
   },
   { timestamps: true }

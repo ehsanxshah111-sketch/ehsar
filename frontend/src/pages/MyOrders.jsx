@@ -9,6 +9,7 @@ const PAYMENT_LABELS = {
   JazzCash: "JazzCash",
   Easypaisa: "Easypaisa",
   BankTransfer: "Bank Transfer",
+  COD: "Cash on Delivery",
 };
 
 const PaymentBadge = ({ order }) => {
@@ -18,8 +19,8 @@ const PaymentBadge = ({ order }) => {
     Rejected: "text-red-600",
   };
   const text = {
-    Submitted: "Payment Pending Verification",
-    Verified: "Payment Verified",
+    Submitted: order.paymentMethod === "COD" ? "Pay on Delivery" : "Payment Pending Verification",
+    Verified: order.paymentMethod === "COD" ? "Cash Received" : "Payment Verified",
     Rejected: "Payment Rejected",
   };
   return (

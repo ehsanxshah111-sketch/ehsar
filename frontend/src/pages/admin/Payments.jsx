@@ -9,6 +9,7 @@ const PAYMENT_LABELS = {
   JazzCash: "JazzCash",
   Easypaisa: "Easypaisa",
   BankTransfer: "Bank Transfer",
+  COD: "Cash on Delivery",
 };
 
 const TABS = ["Needs Review", "Verified", "Rejected", "All"];
@@ -172,19 +173,26 @@ const Payments = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-4 text-xs">
-                <span className="text-gray-500">
-                  Transaction ID: <span className="text-gray-800 font-medium">{order.transactionId}</span>
-                </span>
-                {/* paymentScreenshot is deliberately left out of the list
-                    response for load-time reasons (see backend route) - it's
-                    required on every order, so the button is always shown
-                    and the image is fetched only when actually clicked. */}
-                <button
-                  onClick={() => openScreenshot(order._id)}
-                  className="underline text-gray-600"
-                >
-                  View Screenshot
-                </button>
+                {order.paymentMethod === "COD" ? (
+                  <span className="text-gray-500">Cash to be collected on delivery</span>
+                ) : (
+                  <>
+                    <span className="text-gray-500">
+                      Transaction ID: <span className="text-gray-800 font-medium">{order.transactionId}</span>
+                    </span>
+                    {/* paymentScreenshot is deliberately left out of the list
+                        response for load-time reasons (see backend route) - it's
+                        required on every non-COD order, so the button is always
+                        shown for those and the image is fetched only when
+                        actually clicked. */}
+                    <button
+                      onClick={() => openScreenshot(order._id)}
+                      className="underline text-gray-600"
+                    >
+                      View Screenshot
+                    </button>
+                  </>
+                )}
                 {order.shippingAddress?.phone && (
                   <a
                     href={buildWhatsAppLink(order)}
@@ -215,7 +223,7 @@ const Payments = () => {
                     onClick={() => handlePaymentStatus(order._id, "Verified")}
                     className="btn-primary text-xs px-4 py-2 disabled:opacity-50"
                   >
-                    Mark Payment Received
+                    {order.paymentMethod === "COD" ? "Mark Cash Received" : "Mark Payment Received"}
                   </button>
                   <button
                     disabled={updatingId === order._id}

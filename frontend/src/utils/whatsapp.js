@@ -14,6 +14,7 @@ const PAYMENT_LABELS = {
   JazzCash: "JazzCash",
   Easypaisa: "Easypaisa",
   BankTransfer: "Bank Transfer",
+  COD: "Cash on Delivery",
 };
 
 // One message covering both the order confirmation and where things stand
@@ -29,9 +30,13 @@ export const buildOrderConfirmationMessage = (order) => {
 
   const paymentLine =
     order.paymentStatus === "Verified"
-      ? "Payment received - thank you!"
+      ? order.paymentMethod === "COD"
+        ? "Cash received - thank you!"
+        : "Payment received - thank you!"
       : order.paymentStatus === "Rejected"
       ? "We could not verify your payment yet - please check your transaction details or contact us."
+      : order.paymentMethod === "COD"
+      ? "You'll pay in cash to the rider when your order is delivered."
       : `Payment via ${PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod} is being reviewed.`;
 
   return (

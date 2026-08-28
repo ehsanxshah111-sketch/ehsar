@@ -7,7 +7,7 @@ import { formatPKR } from "../utils/currency.js";
 import Breadcrumbs from "../components/Breadcrumbs.jsx";
 
 const MAX_SCREENSHOT_BYTES = 1_000_000; // ~1MB, matches the backend cap
-const PAYMENT_METHODS = ["JazzCash", "Easypaisa", "BankTransfer"];
+const PAYMENT_METHODS = ["JazzCash", "Easypaisa", "BankTransfer", "COD"];
 
 const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
@@ -113,13 +113,17 @@ const Cart = () => {
       return;
     }
 
-    if (!transactionId.trim()) {
-      setError("Please enter the transaction ID after sending payment.");
-      return;
-    }
-    if (!screenshot) {
-      setError("Please upload a screenshot of the payment.");
-      return;
+    // Nothing to verify in advance for cash on delivery - skip straight to
+    // placing the order.
+    if (paymentMethod !== "COD") {
+      if (!transactionId.trim()) {
+        setError("Please enter the transaction ID after sending payment.");
+        return;
+      }
+      if (!screenshot) {
+        setError("Please upload a screenshot of the payment.");
+        return;
+      }
     }
 
     setPlacing(true);
@@ -333,7 +337,7 @@ const Cart = () => {
             />
 
             <p className="text-xs tracking-widest2 uppercase text-gray-500 mb-1 pt-3">Payment Method</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {PAYMENT_METHODS.map((method) => (
                 <button
                   type="button"
@@ -345,12 +349,20 @@ const Cart = () => {
                       : "border-gray-300 text-gray-600"
                   }`}
                 >
-                  {method === "BankTransfer" ? "Bank Transfer" : method}
+                  {method === "BankTransfer" ? "Bank Transfer" : method === "COD" ? "Cash on Delivery" : method}
                 </button>
               ))}
             </div>
 
-            {(() => {
+            {paymentMethod === "COD" ? (
+              <div className="bg-ehsar-cream p-4 text-xs space-y-2 mt-2">
+                <p>
+                  Pay in cash to the rider when your order is delivered. No advance payment or screenshot
+                  needed.
+                </p>
+              </div>
+            ) : (
+              (() => {
               const settingsKey = SETTINGS_KEY[paymentMethod];
               const details = paymentSettings?.[settingsKey];
               return (
@@ -395,7 +407,8 @@ const Cart = () => {
                   </p>
                 </div>
               );
-            })()}
+            })()
+            )}
 
             {error && <p className="text-red-600 text-xs">{error}</p>}
 

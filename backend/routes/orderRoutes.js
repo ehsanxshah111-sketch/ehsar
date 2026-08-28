@@ -8,7 +8,7 @@ import { logActivity } from "../utils/activityLogger.js";
 
 const router = express.Router();
 
-const PAYMENT_METHODS = ["JazzCash", "Easypaisa", "BankTransfer"];
+const PAYMENT_METHODS = ["JazzCash", "Easypaisa", "BankTransfer", "COD"];
 // Rough cap on the base64 screenshot string so a bad request can't stuff a
 // huge file into the database (express.json is already capped at 5mb too).
 const MAX_SCREENSHOT_LENGTH = 1_500_000; // ~1MB of actual image data
@@ -37,14 +37,17 @@ router.post("/", protectUser, async (req, res) => {
     // JazzCash/Easypaisa/Bank Transfer are self-reported by the customer, so
     // we require both a transaction ID and a screenshot before we'll even
     // create the order - otherwise there's nothing for the admin to verify.
-    if (!transactionId?.trim()) {
-      return res.status(400).json({ message: "Please enter the transaction ID / reference number" });
-    }
-    if (!paymentScreenshot) {
-      return res.status(400).json({ message: "Please upload a screenshot of the payment" });
-    }
-    if (paymentScreenshot.length > MAX_SCREENSHOT_LENGTH) {
-      return res.status(400).json({ message: "Screenshot is too large, please upload a smaller image" });
+    // COD skips both: nothing has been paid yet, so there's nothing to report.
+    if (paymentMethod !== "COD") {
+      if (!transactionId?.trim()) {
+        return res.status(400).json({ message: "Please enter the transaction ID / reference number" });
+      }
+      if (!paymentScreenshot) {
+        return res.status(400).json({ message: "Please upload a screenshot of the payment" });
+      }
+      if (paymentScreenshot.length > MAX_SCREENSHOT_LENGTH) {
+        return res.status(400).json({ message: "Screenshot is too large, please upload a smaller image" });
+      }
     }
 
     // Recomputed here rather than trusting a client-sent total, so a
@@ -103,8 +106,8 @@ router.post("/", protectUser, async (req, res) => {
         couponCode: appliedCoupon ? appliedCoupon.code : "",
         discountAmount,
         paymentMethod,
-        transactionId: transactionId.trim(),
-        paymentScreenshot,
+        transactionId: transactionId?.trim() || "",
+        paymentScreenshot: paymentScreenshot || "",
       });
     } catch (createErr) {
       // Order failed to save after stock was already reserved - put it back.

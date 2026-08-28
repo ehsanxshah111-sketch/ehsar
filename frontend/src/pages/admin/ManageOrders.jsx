@@ -144,7 +144,11 @@ const ManageOrders = () => {
                 <p>
                   <span className="text-gray-500">Payment method:</span>{" "}
                   <span className="font-medium">
-                    {order.paymentMethod === "BankTransfer" ? "Bank Transfer" : order.paymentMethod}
+                    {order.paymentMethod === "BankTransfer"
+                      ? "Bank Transfer"
+                      : order.paymentMethod === "COD"
+                      ? "Cash on Delivery"
+                      : order.paymentMethod}
                   </span>
                   <span
                     className={`ml-2 uppercase tracking-wide ${
@@ -166,14 +170,16 @@ const ManageOrders = () => {
                 )}
                 {/* paymentScreenshot is deliberately left out of the list
                     response (see backend route) so this list loads fast -
-                    every order requires one, so it's fetched only when
-                    actually clicked. */}
-                <button
-                  onClick={() => openScreenshot(order._id)}
-                  className="underline text-gray-600 block"
-                >
-                  View Payment Screenshot
-                </button>
+                    every non-COD order requires one, so it's fetched only
+                    when actually clicked. COD orders never have one. */}
+                {order.paymentMethod !== "COD" && (
+                  <button
+                    onClick={() => openScreenshot(order._id)}
+                    className="underline text-gray-600 block"
+                  >
+                    View Payment Screenshot
+                  </button>
+                )}
                 <div className="flex gap-2 pt-1">
                   <button
                     disabled={updatingId === order._id || order.paymentStatus === "Verified"}
