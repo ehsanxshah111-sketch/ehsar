@@ -27,6 +27,11 @@ const orderSchema = new mongoose.Schema(
       phone: { type: String, required: true },
     },
     totalAmount: { type: Number, required: true },
+    // Set only when this specific order used a coupon at checkout. Left
+    // blank/zero for every order that didn't apply one - those customers
+    // paid totalAmount in full, exactly as before coupons existed.
+    couponCode: { type: String, default: "" },
+    discountAmount: { type: Number, default: 0 },
     // This is what a customer's "My Orders" page tracks - the admin panel
     // moves an order through these steps as it actually progresses.
     status: {

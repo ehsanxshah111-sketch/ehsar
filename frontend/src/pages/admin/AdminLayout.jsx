@@ -59,6 +59,9 @@ const AdminLayout = () => {
       <NavLink to={`${ADMIN_DASHBOARD_PATH}/banners`} className={linkClass} onClick={onNavigate}>
         Banners
       </NavLink>
+      <NavLink to={`${ADMIN_DASHBOARD_PATH}/coupons`} className={linkClass} onClick={onNavigate}>
+        Coupons
+      </NavLink>
       <NavLink to={`${ADMIN_DASHBOARD_PATH}/category-tiles`} className={linkClass} onClick={onNavigate}>
         Category Tiles
       </NavLink>

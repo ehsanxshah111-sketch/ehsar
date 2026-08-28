@@ -31,6 +31,10 @@ const Cart = () => {
   const [transactionId, setTransactionId] = useState("");
   const [screenshot, setScreenshot] = useState("");
   const [screenshotError, setScreenshotError] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discountPercent }
+  const [couponError, setCouponError] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [shipping, setShipping] = useState({
     fullName: customer?.name || "",
     houseNumber: "",
@@ -49,9 +53,38 @@ const Cart = () => {
   }, []);
 
   const shippingCost = total >= 10000 ? 0 : 250;
-  const grandTotal = total + shippingCost;
+  // The coupon discount only ever comes off the product subtotal, never
+  // off shipping - matches how the backend computes it when the order is
+  // actually placed.
+  const discountAmount = appliedCoupon ? Math.round((total * appliedCoupon.discountPercent) / 100) : 0;
+  const grandTotal = total - discountAmount + shippingCost;
 
   const handleShippingChange = (e) => setShipping({ ...shipping, [e.target.name]: e.target.value });
+
+  const handleApplyCoupon = async (e) => {
+    e.preventDefault();
+    setCouponError("");
+    if (!couponInput.trim()) {
+      setCouponError("Please enter a coupon code.");
+      return;
+    }
+    setApplyingCoupon(true);
+    try {
+      const { data } = await customerApi.post("/coupons/validate", { code: couponInput.trim() });
+      setAppliedCoupon(data);
+    } catch (err) {
+      setAppliedCoupon(null);
+      setCouponError(err?.response?.data?.message || "Could not apply that coupon.");
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+  };
 
   const handleScreenshotChange = async (e) => {
     const file = e.target.files?.[0];
@@ -105,6 +138,7 @@ const Cart = () => {
         paymentMethod,
         transactionId,
         paymentScreenshot: screenshot,
+        couponCode: appliedCoupon?.code || "",
       });
       setPlaced(true);
       clearCart();
@@ -181,10 +215,45 @@ const Cart = () => {
           <span>Subtotal</span>
           <span>{formatPKR(total)}</span>
         </div>
+        {appliedCoupon && (
+          <div className="flex justify-between text-sm mb-3 text-green-700">
+            <span>Coupon ({appliedCoupon.code}, {appliedCoupon.discountPercent}% off)</span>
+            <span>-{formatPKR(discountAmount)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm mb-6 text-gray-500">
           <span>Shipping</span>
           <span>{shippingCost === 0 ? "Free" : formatPKR(shippingCost)}</span>
         </div>
+
+        {isAuthenticated && (
+          <div className="mb-6">
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between bg-ehsar-cream text-xs px-3 py-2">
+                <span>
+                  Coupon <strong>{appliedCoupon.code}</strong> applied
+                </span>
+                <button type="button" onClick={handleRemoveCoupon} className="underline text-gray-600">
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="Coupon code"
+                  className="input-field flex-1 uppercase"
+                />
+                <button type="submit" disabled={applyingCoupon} className="btn-outline text-xs px-4 disabled:opacity-50">
+                  {applyingCoupon ? "..." : "Apply"}
+                </button>
+              </form>
+            )}
+            {couponError && <p className="text-red-600 text-xs mt-1">{couponError}</p>}
+          </div>
+        )}
+
         <div className="flex justify-between text-base font-medium border-t border-gray-200 pt-4 mb-6">
           <span>Total</span>
           <span>{formatPKR(grandTotal)}</span>

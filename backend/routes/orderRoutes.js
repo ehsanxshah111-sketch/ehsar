@@ -1,6 +1,7 @@
 import express from "express";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import Coupon from "../models/Coupon.js";
 import { protectUser } from "../middleware/userAuth.js";
 import { protect } from "../middleware/auth.js";
 import { logActivity } from "../utils/activityLogger.js";
@@ -15,7 +16,7 @@ const MAX_SCREENSHOT_LENGTH = 1_500_000; // ~1MB of actual image data
 // POST /api/orders  (customer only) - place an order from the cart
 router.post("/", protectUser, async (req, res) => {
   try {
-    const { items, shippingAddress, paymentMethod, transactionId, paymentScreenshot } = req.body;
+    const { items, shippingAddress, paymentMethod, transactionId, paymentScreenshot, couponCode } = req.body;
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "Your order has no items" });
     }
@@ -48,7 +49,26 @@ router.post("/", protectUser, async (req, res) => {
 
     // Recomputed here rather than trusting a client-sent total, so a
     // tampered request can't place an order for less than it should cost.
-    const totalAmount = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+    // Coupon is re-checked here (not just trusted from the cart's earlier
+    // "Apply" call) so that a code deactivated by the admin between the
+    // customer applying it and actually placing the order can't still be
+    // used, and so a tampered request can't claim a discount that was
+    // never validated at all. The discount only ever comes off the product
+    // subtotal above - it never touches shipping.
+    let appliedCoupon = null;
+    let discountAmount = 0;
+    const trimmedCode = (couponCode || "").trim().toUpperCase();
+    if (trimmedCode) {
+      const coupon = await Coupon.findOne({ code: trimmedCode });
+      if (!coupon || !coupon.isActive) {
+        return res.status(400).json({ message: "That coupon code is invalid or is no longer active" });
+      }
+      appliedCoupon = coupon;
+      discountAmount = Math.round((subtotal * coupon.discountPercent) / 100);
+    }
+    const totalAmount = subtotal - discountAmount;
 
     // Reserve stock atomically per line item before the order is created.
     // Each decrement is conditioned on stock >= qty, so two customers racing
@@ -80,6 +100,8 @@ router.post("/", protectUser, async (req, res) => {
         items,
         shippingAddress,
         totalAmount,
+        couponCode: appliedCoupon ? appliedCoupon.code : "",
+        discountAmount,
         paymentMethod,
         transactionId: transactionId.trim(),
         paymentScreenshot,

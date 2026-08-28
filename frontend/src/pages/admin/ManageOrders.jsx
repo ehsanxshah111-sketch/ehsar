@@ -115,6 +115,11 @@ const ManageOrders = () => {
                 </div>
                 <div className="text-right">
                   <p className="font-medium">{formatPKR(order.totalAmount)}</p>
+                  {order.couponCode && (
+                    <p className="text-xs text-green-700">
+                      Coupon {order.couponCode} (-{formatPKR(order.discountAmount)})
+                    </p>
+                  )}
                   <p className={`text-xs uppercase tracking-wide ${statusColor(order.status)}`}>
                     {order.status}
                   </p>

@@ -106,6 +106,11 @@ const MyOrders = () => {
               </span>
               <span className="text-sm font-medium">{formatPKR(order.totalAmount)}</span>
             </div>
+            {order.couponCode && (
+              <p className="text-xs text-green-700 mb-2">
+                Coupon {order.couponCode} applied (-{formatPKR(order.discountAmount)})
+              </p>
+            )}
 
             <PaymentBadge order={order} />
 
