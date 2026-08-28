@@ -52,7 +52,7 @@ const Cart = () => {
       .catch(() => setPaymentSettings(null));
   }, []);
 
-  const shippingCost = total >= 10000 ? 0 : 250;
+  const shippingCost = total >= 10000 ? 0 : 100;
   // The coupon discount only ever comes off the product subtotal, never
   // off shipping - matches how the backend computes it when the order is
   // actually placed.
