@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.local
+
+# One-off local tools - not part of the deployed app, never needs to be
+# pushed or deployed. Keep the folder on your own machine only.
+scripts/
