@@ -5,8 +5,8 @@ import InfoPage from "./InfoPage.jsx";
 // real ones whenever you're ready. Nothing else needs to change; this is
 // the only file that feeds the "Contact Us" page.
 const CONTACT_EMAIL = "support@ehsar.com";
-const CONTACT_PHONE_DISPLAY = "+92 3000878181";
-const CONTACT_WHATSAPP_LINK = "https://wa.me/923000878181";
+const CONTACT_PHONE_DISPLAY = "+92 300 1234567";
+const CONTACT_WHATSAPP_LINK = "https://wa.me/923001234567";
 const INSTAGRAM_LINK = "https://www.instagram.com/ehsar.store/";
 
 const ContactUs = () => (

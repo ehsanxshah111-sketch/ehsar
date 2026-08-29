@@ -3,26 +3,12 @@ import { Link } from "react-router-dom";
 
 const Footer = () => (
   <footer className="bg-ehsar-black text-white mt-24">
-    <div className="container-ehsar py-16 grid grid-cols-2 md:grid-cols-4 gap-10">
+    <div className="container-ehsar py-16 grid grid-cols-2 md:grid-cols-5 gap-10">
       <div className="col-span-2 md:col-span-1">
         <h3 className="text-2xl font-display tracking-widest2 uppercase mb-4">Ehsar</h3>
-        <p className="text-sm text-gray-400 leading-relaxed mb-4">
+        <p className="text-sm text-gray-400 leading-relaxed">
           Contemporary essentials, tailored for a modern wardrobe.
         </p>
-        <a
-          href="https://www.instagram.com/ehsar.store/"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Ehsar on Instagram"
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-ehsar-gold"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <rect x="2" y="2" width="20" height="20" rx="5" />
-            <circle cx="12" cy="12" r="4.2" />
-            <circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none" />
-          </svg>
-          @ehsar.store
-        </a>
       </div>
       <div>
         <h4 className="text-xs tracking-widest2 uppercase text-gray-400 mb-4">Shop</h4>
@@ -45,6 +31,26 @@ const Footer = () => (
         <ul className="space-y-2 text-sm">
           <li><Link to="/shipping-returns" className="hover:text-ehsar-gold">Shipping & Returns</Link></li>
           <li><Link to="/contact" className="hover:text-ehsar-gold">Contact Us</Link></li>
+        </ul>
+      </div>
+      <div>
+        <h4 className="text-xs tracking-widest2 uppercase text-gray-400 mb-4">Social Pages</h4>
+        <ul className="space-y-2 text-sm">
+          <li>
+            <a
+              href="https://www.instagram.com/ehsar.store/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 hover:text-ehsar-gold"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="2" y="2" width="20" height="20" rx="5" />
+                <circle cx="12" cy="12" r="4.2" />
+                <circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none" />
+              </svg>
+              Instagram
+            </a>
+          </li>
         </ul>
       </div>
     </div>
