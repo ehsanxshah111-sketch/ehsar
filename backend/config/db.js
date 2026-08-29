@@ -15,13 +15,52 @@ if (!cached) {
 const RETRY_DELAY_MS = 5000;
 
 const connectDB = async () => {
-  if (cached.conn) return cached.conn;
+  // A cached connection OBJECT stays truthy forever, even after the
+  // underlying socket has actually died (Atlas closing an idle connection,
+  // or Vercel freezing/thawing the function after a period of no traffic).
+  // Without checking readyState, every request after that point kept
+  // reusing a dead connection - queries would fail or hang, which is
+  // exactly why the site would break after sitting idle and then "fix
+  // itself" on redeploy (a fresh deployment starts with no cache at all,
+  // forcing one new real connection).
+  if (cached.conn && cached.conn.connection.readyState === 1) {
+    return cached.conn;
+  }
+
+  // Connection exists but isn't actually live (readyState 0 disconnected,
+  // 2 connecting-stuck, or 3 disconnecting) - discard it and reconnect
+  // instead of handing back something broken.
+  if (cached.conn) {
+    cached.conn = null;
+    cached.promise = null;
+  }
+
   if (!cached.promise) {
-    cached.promise = mongoose.connect(process.env.MONGO_URI).then((m) => m);
+    cached.promise = mongoose
+      .connect(process.env.MONGO_URI, {
+        // Fail fast instead of hanging the request for the default 30s if
+        // Atlas is briefly unreachable - callers already handle a thrown
+        // error here (see the try/catch below and each route's own
+        // error handling).
+        serverSelectionTimeoutMS: 10000,
+      })
+      .then((m) => m);
   }
   try {
     cached.conn = await cached.promise;
     console.log(`MongoDB connected: ${cached.conn.connection.host}`);
+
+    // If the connection drops later (Atlas closes it, network blip), make
+    // sure the NEXT connectDB() call reconnects instead of trusting a
+    // now-dead cached object - this is what the readyState check above
+    // relies on actually being accurate.
+    cached.conn.connection.removeAllListeners("disconnected");
+    cached.conn.connection.on("disconnected", () => {
+      console.warn("MongoDB disconnected - will reconnect on next request");
+      cached.conn = null;
+      cached.promise = null;
+    });
+
     return cached.conn;
   } catch (err) {
     cached.promise = null;
