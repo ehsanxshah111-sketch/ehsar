@@ -138,24 +138,26 @@ const ProductDetail = () => {
                   </svg>
                 </button>
 
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-0.5">
                   {images.map((_, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setActiveImg(i)}
                       aria-label={`Go to image ${i + 1}`}
-                      className={`w-1.5 h-1.5 rounded-full transition-colors ${activeImg === i ? "bg-ehsar-black" : "bg-white/80"}`}
-                    />
+                      className="w-6 h-6 flex items-center justify-center"
+                    >
+                      <span className={`block w-1.5 h-1.5 rounded-full transition-colors ${activeImg === i ? "bg-ehsar-black" : "bg-white/80"}`} />
+                    </button>
                   ))}
                 </div>
               </>
             )}
           </div>
           {images.length > 1 && (
-            <div className="flex gap-3">
+            <div className="flex gap-3 overflow-x-auto pb-1">
               {images.map((img, i) => (
-                <button key={i} onClick={() => setActiveImg(i)} className={`w-16 h-20 overflow-hidden border ${activeImg === i ? "border-ehsar-black" : "border-transparent"}`}>
+                <button key={i} onClick={() => setActiveImg(i)} className={`shrink-0 w-16 h-20 overflow-hidden border ${activeImg === i ? "border-ehsar-black" : "border-transparent"}`}>
                   <img src={img} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}

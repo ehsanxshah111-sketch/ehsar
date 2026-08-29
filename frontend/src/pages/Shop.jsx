@@ -98,13 +98,13 @@ const Shop = () => {
       <Breadcrumbs items={category ? [{ label: "Shop", to: "/shop" }, { label: heading }] : [{ label: heading }]} />
       <h1 className="section-title">{heading}</h1>
 
-      <div className="flex justify-center gap-6 mb-4 text-sm tracking-widest2 uppercase">
+      <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-4 text-sm tracking-widest2 uppercase">
         <button onClick={() => setCategory("")} className={!category ? "text-ehsar-gold" : ""}>All</button>
         <button onClick={() => setCategory("women")} className={category === "women" ? "text-ehsar-gold" : ""}>Women</button>
         <button onClick={() => setCategory("men")} className={category === "men" ? "text-ehsar-gold" : ""}>Men</button>
       </div>
 
-      <div className="flex justify-center gap-5 mb-8 text-xs tracking-wide uppercase text-gray-500">
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mb-8 text-xs tracking-wide uppercase text-gray-500">
         <button onClick={() => setType("")} className={!type ? "text-ehsar-gold" : ""}>All Types</button>
         <button onClick={() => setType("clothing")} className={type === "clothing" ? "text-ehsar-gold" : ""}>Clothing</button>
         <button onClick={() => setType("shoes")} className={type === "shoes" ? "text-ehsar-gold" : ""}>Shoes</button>
@@ -116,7 +116,7 @@ const Shop = () => {
         <p className="text-xs text-gray-500 uppercase tracking-wide">
           {loading ? "Loading..." : `${visibleProducts.length} item${visibleProducts.length !== 1 ? "s" : ""}`}
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <label className="text-xs uppercase tracking-wide text-gray-500 flex items-center gap-2">
             Under
             <input

@@ -58,16 +58,18 @@ const BannerCarousel = ({ banners }) => {
       </div>
 
       {banners.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-1">
           {banners.map((_, i) => (
             <button
               key={i}
               onClick={() => setIndex(i)}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                i === index ? "bg-white" : "bg-white/40"
-              }`}
+              className="w-8 h-8 flex items-center justify-center"
               aria-label={`Slide ${i + 1}`}
-            />
+            >
+              <span className={`block w-2 h-2 rounded-full transition-colors ${
+                i === index ? "bg-white" : "bg-white/40"
+              }`} />
+            </button>
           ))}
         </div>
       )}
