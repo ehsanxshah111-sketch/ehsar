@@ -21,16 +21,16 @@ const Footer = () => (
       <div>
         <h4 className="text-xs tracking-widest2 uppercase text-gray-400 mb-4">Company</h4>
         <ul className="space-y-2 text-sm">
-          <li><span className="text-gray-400">About Ehsar</span></li>
-          <li><span className="text-gray-400">Sustainability</span></li>
-          <li><span className="text-gray-400">Careers</span></li>
+          <li><Link to="/about" className="hover:text-ehsar-gold">About Ehsar</Link></li>
+          <li><Link to="/sustainability" className="hover:text-ehsar-gold">Sustainability</Link></li>
+          <li><Link to="/careers" className="hover:text-ehsar-gold">Careers</Link></li>
         </ul>
       </div>
       <div>
         <h4 className="text-xs tracking-widest2 uppercase text-gray-400 mb-4">Support</h4>
         <ul className="space-y-2 text-sm">
-          <li><span className="text-gray-400">Shipping & Returns</span></li>
-          <li><span className="text-gray-400">Contact Us</span></li>
+          <li><Link to="/shipping-returns" className="hover:text-ehsar-gold">Shipping & Returns</Link></li>
+          <li><Link to="/contact" className="hover:text-ehsar-gold">Contact Us</Link></li>
         </ul>
       </div>
     </div>

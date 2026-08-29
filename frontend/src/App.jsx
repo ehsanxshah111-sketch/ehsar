@@ -10,6 +10,11 @@ import Wishlist from "./pages/Wishlist.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import MyOrders from "./pages/MyOrders.jsx";
+import AboutEhsar from "./pages/info/AboutEhsar.jsx";
+import Sustainability from "./pages/info/Sustainability.jsx";
+import Careers from "./pages/info/Careers.jsx";
+import ShippingReturns from "./pages/info/ShippingReturns.jsx";
+import ContactUs from "./pages/info/ContactUs.jsx";
 import CustomerProtectedRoute from "./components/CustomerProtectedRoute.jsx";
 import AdminLogin from "./pages/admin/AdminLogin.jsx";
 import AdminLayout from "./pages/admin/AdminLayout.jsx";
@@ -46,6 +51,11 @@ function App() {
       <Route path="/wishlist" element={<PublicLayout><Wishlist /></PublicLayout>} />
       <Route path="/login" element={<PublicLayout><Login /></PublicLayout>} />
       <Route path="/register" element={<PublicLayout><Register /></PublicLayout>} />
+      <Route path="/about" element={<PublicLayout><AboutEhsar /></PublicLayout>} />
+      <Route path="/sustainability" element={<PublicLayout><Sustainability /></PublicLayout>} />
+      <Route path="/careers" element={<PublicLayout><Careers /></PublicLayout>} />
+      <Route path="/shipping-returns" element={<PublicLayout><ShippingReturns /></PublicLayout>} />
+      <Route path="/contact" element={<PublicLayout><ContactUs /></PublicLayout>} />
       <Route
         path="/my-orders"
         element={
