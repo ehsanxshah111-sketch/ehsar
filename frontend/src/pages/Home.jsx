@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import api from "../api/axios.js";
 import BannerCarousel from "../components/BannerCarousel.jsx";
+import CategoryTilesSection from "../components/CategoryTilesSection.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 import ProductGridSkeleton from "../components/ProductGridSkeleton.jsx";
 
@@ -48,26 +48,7 @@ const Home = () => {
         )}
       </section>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2">
-        {categoryTiles.map((tile) => (
-          <Link
-            key={tile._id}
-            to={tile.linkUrl || "/shop"}
-            className="relative group h-[50vh] overflow-hidden block"
-          >
-            <img
-              src={tile.image}
-              alt={tile.label}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-              <span className="text-white text-2xl tracking-widest2 uppercase border-b border-white pb-1">
-                {tile.label}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </section>
+      <CategoryTilesSection tiles={categoryTiles} />
 
       <section className="container-ehsar py-20 text-center">
         <h2 className="section-title">The Ehsar Promise</h2>

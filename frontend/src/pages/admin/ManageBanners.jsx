@@ -5,7 +5,9 @@ const emptyForm = {
   title: "",
   subtitle: "",
   promotionText: "",
+  mediaType: "image",
   image: "",
+  video: "",
   linkUrl: "/shop",
   buttonText: "Shop Now",
   isActive: true,
@@ -48,7 +50,9 @@ const ManageBanners = () => {
       title: b.title,
       subtitle: b.subtitle || "",
       promotionText: b.promotionText || "",
-      image: b.image,
+      mediaType: b.mediaType || "image",
+      image: b.image || "",
+      video: b.video || "",
       linkUrl: b.linkUrl || "/shop",
       buttonText: b.buttonText || "Shop Now",
       isActive: b.isActive,
@@ -68,7 +72,16 @@ const ManageBanners = () => {
     e.preventDefault();
     setError("");
 
-    if (!/^https?:\/\//i.test(form.image.trim())) {
+    if (form.mediaType === "video") {
+      if (!/^https?:\/\//i.test(form.video.trim())) {
+        setError("Video must be a link starting with http:// or https:// - not raw file data.");
+        return;
+      }
+      if (form.image.trim() && !/^https?:\/\//i.test(form.image.trim())) {
+        setError("Poster image must be a link starting with http:// or https://, or left blank.");
+        return;
+      }
+    } else if (!/^https?:\/\//i.test(form.image.trim())) {
       setError("Image must be a link starting with http:// or https:// - not raw file data.");
       return;
     }
@@ -130,21 +143,64 @@ const ManageBanners = () => {
               <input name="subtitle" value={form.subtitle} onChange={handleChange} className="input-field" />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-xs uppercase text-gray-500 mb-1 block">Image URL *</label>
-              <input
-                name="image"
-                value={form.image}
-                onChange={handleChange}
-                placeholder="https://i.imgur.com/example.jpg"
-                className="input-field"
-                maxLength={2000}
-                required
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Paste a link to an image already hosted online (e.g. upload it to imgur.com first and copy
-                its image address). Don't paste raw file data - only a link starting with http:// or https://
-              </p>
+              <label className="text-xs uppercase text-gray-500 mb-1 block">Media Type</label>
+              <select name="mediaType" value={form.mediaType} onChange={handleChange} className="input-field w-40">
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+              </select>
             </div>
+            {form.mediaType === "video" ? (
+              <>
+                <div className="sm:col-span-2">
+                  <label className="text-xs uppercase text-gray-500 mb-1 block">Video URL *</label>
+                  <input
+                    name="video"
+                    value={form.video}
+                    onChange={handleChange}
+                    placeholder="https://example.com/banner.mp4"
+                    className="input-field"
+                    maxLength={2000}
+                    required
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    A direct link to an .mp4 or .webm file (upload it somewhere like Cloudinary or a CDN
+                    first, then paste the link here). It plays muted and on a loop, so keep it short - a
+                    few seconds is plenty.
+                  </p>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs uppercase text-gray-500 mb-1 block">Poster Image (optional)</label>
+                  <input
+                    name="image"
+                    value={form.image}
+                    onChange={handleChange}
+                    placeholder="https://i.imgur.com/example.jpg"
+                    className="input-field"
+                    maxLength={2000}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Shown while the video loads, and as a fallback if a visitor's browser can't play it.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="sm:col-span-2">
+                <label className="text-xs uppercase text-gray-500 mb-1 block">Image URL *</label>
+                <input
+                  name="image"
+                  value={form.image}
+                  onChange={handleChange}
+                  placeholder="https://i.imgur.com/example.jpg"
+                  className="input-field"
+                  maxLength={2000}
+                  required
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Paste a link to an image already hosted online (e.g. upload it to imgur.com first and copy
+                  its image address). Don't paste raw file data - only a link starting with http:// or https://
+                </p>
+              </div>
+            )}
             <div>
               <label className="text-xs uppercase text-gray-500 mb-1 block">Button Link</label>
               <input name="linkUrl" value={form.linkUrl} onChange={handleChange} className="input-field" />
@@ -184,8 +240,17 @@ const ManageBanners = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {banners.map((b) => (
             <div key={b._id} className="admin-card overflow-hidden">
-              <div className="h-40 bg-ehsar-cream">
-                <img src={b.image} alt={b.title} className="w-full h-full object-cover" />
+              <div className="h-40 bg-ehsar-cream relative">
+                {b.mediaType === "video" && b.video ? (
+                  <>
+                    <video src={b.video} poster={b.image || undefined} className="w-full h-full object-cover" muted />
+                    <span className="absolute top-2 left-2 text-xs bg-black/60 text-white px-2 py-0.5 rounded">
+                      Video
+                    </span>
+                  </>
+                ) : (
+                  <img src={b.image} alt={b.title} className="w-full h-full object-cover" />
+                )}
               </div>
               <div className="p-4">
                 <div className="flex justify-between items-start mb-2">

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 const BannerCarousel = ({ banners }) => {
   const [index, setIndex] = useState(0);
+  const videoRefs = useRef({});
 
   useEffect(() => {
     if (!banners || banners.length < 2) return;
@@ -11,6 +12,19 @@ const BannerCarousel = ({ banners }) => {
     }, 5500);
     return () => clearInterval(timer);
   }, [banners]);
+
+  // Only the currently visible slide's video should actually play - pausing
+  // the others saves CPU/battery and stops several videos competing for
+  // decoding resources at once. Runs whenever the active slide changes,
+  // rather than on every render (an inline ref callback would re-fire on
+  // every render since its identity changes each time).
+  useEffect(() => {
+    Object.entries(videoRefs.current).forEach(([i, el]) => {
+      if (!el) return;
+      if (Number(i) === index) el.play().catch(() => {});
+      else el.pause();
+    });
+  }, [index]);
 
   if (!banners || banners.length === 0) {
     return (
@@ -31,11 +45,24 @@ const BannerCarousel = ({ banners }) => {
             i === index ? "opacity-100" : "opacity-0"
           }`}
         >
-          <img
-            src={b.image}
-            alt={b.title}
-            className="w-full h-full object-cover"
-          />
+          {b.mediaType === "video" && b.video ? (
+            <video
+              ref={(el) => (videoRefs.current[i] = el)}
+              src={b.video}
+              poster={b.image || undefined}
+              className="w-full h-full object-cover"
+              autoPlay={i === index}
+              muted
+              loop
+              playsInline
+            />
+          ) : (
+            <img
+              src={b.image}
+              alt={b.title}
+              className="w-full h-full object-cover"
+            />
+          )}
           <div className="absolute inset-0 bg-black/30" />
         </div>
       ))}
