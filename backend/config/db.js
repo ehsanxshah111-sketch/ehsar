@@ -9,6 +9,11 @@ if (!cached) {
   cached = global._mongooseConn = { conn: null, promise: null };
 }
 
+// If the initial connection attempt fails (wrong MONGO_URI, DB briefly
+// unreachable, network hiccup during boot), keep retrying at this interval
+// instead of giving up. Only matters outside Vercel - see the note below.
+const RETRY_DELAY_MS = 5000;
+
 const connectDB = async () => {
   if (cached.conn) return cached.conn;
   if (!cached.promise) {
@@ -21,11 +26,33 @@ const connectDB = async () => {
   } catch (err) {
     cached.promise = null;
     console.error(`MongoDB connection error: ${err.message}`);
-    // In local dev it's fine to crash loudly; on Vercel this just fails
-    // the single request instead of killing the whole function runtime.
-    if (!process.env.VERCEL) process.exit(1);
+
+    // On Vercel, a failed connection only fails the one request that
+    // triggered it - the next request calls connectDB() again on its own,
+    // so there's nothing more to do here.
+    //
+    // Outside Vercel (a VM/VPS running `node server.js` directly), this
+    // used to call process.exit(1) - which kills the entire site, not just
+    // this one failed connection. If nothing is watching the process to
+    // restart it, one bad boot (a typo'd MONGO_URI, the database being
+    // briefly unreachable) takes the whole store offline until someone
+    // notices and restarts it by hand. Instead, keep the process alive -
+    // the health check and any non-DB routes keep working, DB-backed
+    // routes return a clean timeout error in the meantime (see
+    // orderRoutes.js etc.) - and retry the connection in the background.
+    // Once MongoDB becomes reachable, everything starts working again with
+    // no restart needed.
+    if (!process.env.VERCEL) {
+      setTimeout(() => {
+        cached.promise = null;
+        connectDB().catch(() => {
+          // Already logged above; connectDB will schedule the next retry.
+        });
+      }, RETRY_DELAY_MS);
+    }
     throw err;
   }
 };
 
 export default connectDB;
+

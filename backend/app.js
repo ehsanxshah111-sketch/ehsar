@@ -22,7 +22,14 @@ import couponRoutes from "./routes/couponRoutes.js";
 // calls here means the app works correctly no matter which file Vercel
 // actually picks as the entry - locally, on Vercel, either way.
 dotenv.config();
-connectDB();
+// Not awaited (this file may run as a Vercel serverless function, which
+// can't block its own module load on a DB connection) - but it must still
+// be caught here. db.js already logs the failure and, outside Vercel,
+// keeps retrying in the background - this .catch() just stops that first
+// rejection from becoming an unhandled promise rejection, which would
+// otherwise crash the whole process on its own, independent of the retry
+// logic in db.js.
+connectDB().catch(() => {});
 
 const app = express();
 
