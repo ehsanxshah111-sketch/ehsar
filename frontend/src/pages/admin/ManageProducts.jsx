@@ -40,6 +40,8 @@ const ManageProducts = () => {
   const [uploadError, setUploadError] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -206,6 +208,41 @@ const ManageProducts = () => {
     return matchesType && matchesCategory;
   });
 
+  // "Select all" only ever selects the currently filtered/visible rows -
+  // not every product in the store - so it does what it looks like it does
+  // even while a category/type filter is active.
+  const allVisibleSelected = visibleProducts.length > 0 && visibleProducts.every((p) => selectedIds.has(p._id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      if (allVisibleSelected) return new Set();
+      return new Set(visibleProducts.map((p) => p._id));
+    });
+  };
+
+  const toggleSelectOne = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkAction = async (action) => {
+    if (selectedIds.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      await api.put("/products/bulk-update", { ids: Array.from(selectedIds), action });
+      setSelectedIds(new Set());
+      loadProducts();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -343,7 +380,7 @@ const ManageProducts = () => {
         </div>
       )}
 
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex flex-wrap items-center gap-4 mb-4">
         <label className="text-xs uppercase text-gray-500">Filter by category:</label>
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="input-field w-32 py-1.5">
           <option value="">All</option>
@@ -360,10 +397,43 @@ const ManageProducts = () => {
         </select>
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 bg-ehsar-cream px-4 py-3 mb-4 text-xs">
+          <span className="font-medium">{selectedIds.size} selected</span>
+          <button
+            disabled={bulkActionLoading}
+            onClick={() => handleBulkAction("feature")}
+            className="btn-outline py-1.5 px-3 disabled:opacity-50"
+          >
+            Mark as Featured
+          </button>
+          <button
+            disabled={bulkActionLoading}
+            onClick={() => handleBulkAction("sale")}
+            className="btn-outline py-1.5 px-3 disabled:opacity-50"
+          >
+            Mark as On Sale
+          </button>
+          <button
+            disabled={bulkActionLoading}
+            onClick={() => handleBulkAction("none")}
+            className="btn-outline py-1.5 px-3 disabled:opacity-50"
+          >
+            Clear (Nothing)
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="underline text-gray-500 ml-auto">
+            Clear selection
+          </button>
+        </div>
+      )}
+
       <div className="admin-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
+              <th className="p-4 w-10">
+                <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label="Select all products" />
+              </th>
               <th className="p-4">Product</th>
               <th className="p-4">Category</th>
               <th className="p-4">Type</th>
@@ -375,12 +445,20 @@ const ManageProducts = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="7" className="p-6 text-center text-gray-400">Loading...</td></tr>
+              <tr><td colSpan="8" className="p-6 text-center text-gray-400">Loading...</td></tr>
             ) : visibleProducts.length === 0 ? (
-              <tr><td colSpan="7" className="p-6 text-center text-gray-400">No products yet.</td></tr>
+              <tr><td colSpan="8" className="p-6 text-center text-gray-400">No products yet.</td></tr>
             ) : (
               visibleProducts.map((p) => (
                 <tr key={p._id} className="border-b border-gray-100">
+                  <td className="p-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(p._id)}
+                      onChange={() => toggleSelectOne(p._id)}
+                      aria-label={`Select ${p.name}`}
+                    />
+                  </td>
                   <td className="p-4 flex items-center gap-3">
                     <img
                       src={p.images?.[0] || "https://via.placeholder.com/60x80?text=Ehsar"}

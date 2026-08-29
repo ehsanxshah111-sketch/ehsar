@@ -47,6 +47,37 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
+// PUT /api/products/bulk-update (admin only) - apply Featured / On Sale /
+// Clear to many products at once, e.g. after selecting several with the
+// "select all" checkbox in the admin product table. Registered before the
+// PUT /:id route below so Express matches this literal path first - if it
+// came after, "/bulk-update" would itself get treated as an :id value.
+router.put("/bulk-update", protect, async (req, res) => {
+  try {
+    const { ids, action } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No products selected" });
+    }
+
+    let update;
+    if (action === "feature") update = { isFeatured: true };
+    else if (action === "sale") update = { isOnSale: true };
+    else if (action === "none") update = { isFeatured: false, isOnSale: false };
+    else return res.status(400).json({ message: "Invalid action" });
+
+    const result = await Product.updateMany({ _id: { $in: ids } }, update);
+    const actionLabel = action === "feature" ? "Featured" : action === "sale" ? "On Sale" : "Cleared (no flags)";
+    await logActivity(
+      req.admin.username,
+      "Bulk Product Update",
+      `${req.admin.username} set ${result.modifiedCount} product(s) to "${actionLabel}"`
+    );
+    res.json({ message: "Updated", modifiedCount: result.modifiedCount });
+  } catch (err) {
+    res.status(400).json({ message: "Failed to bulk update products", error: err.message });
+  }
+});
+
 // PUT /api/products/:id (admin only)
 router.put("/:id", protect, async (req, res) => {
   try {
