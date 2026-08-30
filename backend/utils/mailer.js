@@ -64,6 +64,10 @@ function buildOrderEmailHtml(order) {
           : ""
       }
       <tr>
+        <td style="padding:4px 8px;">Shipping</td>
+        <td style="padding:4px 8px;text-align:right;">${order.shippingFee ? money(order.shippingFee) : "Free"}</td>
+      </tr>
+      <tr>
         <td style="padding:4px 8px;font-weight:bold;">Total</td>
         <td style="padding:4px 8px;text-align:right;font-weight:bold;">${money(order.totalAmount)}</td>
       </tr>

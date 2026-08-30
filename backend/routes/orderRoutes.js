@@ -72,7 +72,13 @@ router.post("/", protectUser, async (req, res) => {
       appliedCoupon = coupon;
       discountAmount = Math.round((subtotal * coupon.discountPercent) / 100);
     }
-    const totalAmount = subtotal - discountAmount;
+    // Same free-shipping-over-Rs10,000 rule as the cart page (Cart.jsx) -
+    // kept in sync with that threshold. Computed here from the server-side
+    // subtotal rather than trusting anything shipping-related the client
+    // sends, for the same tamper-proofing reason the subtotal itself is
+    // recomputed above.
+    const shippingFee = subtotal >= 10000 ? 0 : 100;
+    const totalAmount = subtotal - discountAmount + shippingFee;
 
     // Reserve stock atomically per line item before the order is created.
     // Each decrement is conditioned on stock >= qty, so two customers racing
@@ -106,6 +112,7 @@ router.post("/", protectUser, async (req, res) => {
         totalAmount,
         couponCode: appliedCoupon ? appliedCoupon.code : "",
         discountAmount,
+        shippingFee,
         paymentMethod,
         transactionId: transactionId?.trim() || "",
         paymentScreenshot: paymentScreenshot || "",

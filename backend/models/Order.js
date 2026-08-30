@@ -26,12 +26,20 @@ const orderSchema = new mongoose.Schema(
       postalCode: { type: String, default: "" },
       phone: { type: String, required: true },
     },
+    // totalAmount is the actual final amount the customer pays - product
+    // subtotal, minus any coupon discount, plus shippingFee. It must
+    // include shipping so it matches what's shown at checkout and what
+    // admin revenue totals/exports actually add up to.
     totalAmount: { type: Number, required: true },
     // Set only when this specific order used a coupon at checkout. Left
     // blank/zero for every order that didn't apply one - those customers
     // paid totalAmount in full, exactly as before coupons existed.
     couponCode: { type: String, default: "" },
     discountAmount: { type: Number, default: 0 },
+    // Same free-shipping-over-Rs10,000 rule as the cart page. Stored per
+    // order (not just recomputed live) so a later change to the threshold
+    // never rewrites what a past order actually charged.
+    shippingFee: { type: Number, default: 0 },
     // This is what a customer's "My Orders" page tracks - the admin panel
     // moves an order through these steps as it actually progresses.
     status: {
