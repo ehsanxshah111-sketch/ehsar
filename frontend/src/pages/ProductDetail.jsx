@@ -83,6 +83,15 @@ const ProductDetail = () => {
     setTimeout(() => setAdded(false), 2000);
   };
 
+  // Adds the item just like "Add to Bag", then skips straight to the cart
+  // page - which is also where checkout/place-order lives on this site -
+  // so the customer doesn't have to add it and then separately click
+  // "View Bag" themselves.
+  const handleBuyNow = () => {
+    addItem(product, size, color, 1);
+    navigate("/cart");
+  };
+
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     setReviewError("");
@@ -240,9 +249,14 @@ const ProductDetail = () => {
               Out of Stock
             </button>
           ) : (
-            <button onClick={handleAdd} className="btn-primary w-full mb-3">
-              {added ? "Added to Bag ✓" : "Add to Bag"}
-            </button>
+            <>
+              <button onClick={handleAdd} className="btn-primary w-full mb-3">
+                {added ? "Added to Bag ✓" : "Add to Bag"}
+              </button>
+              <button onClick={handleBuyNow} className="btn-outline w-full mb-3">
+                Buy Now
+              </button>
+            </>
           )}
           <button onClick={() => navigate("/cart")} className="btn-outline w-full">
             View Bag
