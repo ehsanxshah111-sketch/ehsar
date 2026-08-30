@@ -1,7 +1,7 @@
 import React from "react";
 
 // Shared shell for the simple, mostly-static footer pages (About,
-// Sustainability, Careers, Shipping & Returns). Keeps their heading/spacing
+// Sustainability, Careers, Shipping). Keeps their heading/spacing
 // consistent without repeating the same wrapper markup five times.
 const InfoPage = ({ title, children }) => (
   <div className="container-ehsar py-20 max-w-3xl mx-auto">

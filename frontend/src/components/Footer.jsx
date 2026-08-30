@@ -29,7 +29,7 @@ const Footer = () => (
       <div>
         <h4 className="text-xs tracking-widest2 uppercase text-gray-400 mb-4">Support</h4>
         <ul className="space-y-2 text-sm">
-          <li><Link to="/shipping-returns" className="hover:text-ehsar-gold">Shipping & Returns</Link></li>
+          <li><Link to="/shipping" className="hover:text-ehsar-gold">Shipping</Link></li>
           <li><Link to="/contact" className="hover:text-ehsar-gold">Contact Us</Link></li>
         </ul>
       </div>

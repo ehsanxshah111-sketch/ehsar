@@ -13,7 +13,7 @@ import MyOrders from "./pages/MyOrders.jsx";
 import AboutEhsar from "./pages/info/AboutEhsar.jsx";
 import Sustainability from "./pages/info/Sustainability.jsx";
 import Careers from "./pages/info/Careers.jsx";
-import ShippingReturns from "./pages/info/ShippingReturns.jsx";
+import Shipping from "./pages/info/Shipping.jsx";
 import ContactUs from "./pages/info/ContactUs.jsx";
 import CustomerProtectedRoute from "./components/CustomerProtectedRoute.jsx";
 import AdminLogin from "./pages/admin/AdminLogin.jsx";
@@ -54,7 +54,7 @@ function App() {
       <Route path="/about" element={<PublicLayout><AboutEhsar /></PublicLayout>} />
       <Route path="/sustainability" element={<PublicLayout><Sustainability /></PublicLayout>} />
       <Route path="/careers" element={<PublicLayout><Careers /></PublicLayout>} />
-      <Route path="/shipping-returns" element={<PublicLayout><ShippingReturns /></PublicLayout>} />
+      <Route path="/shipping" element={<PublicLayout><Shipping /></PublicLayout>} />
       <Route path="/contact" element={<PublicLayout><ContactUs /></PublicLayout>} />
       <Route
         path="/my-orders"
