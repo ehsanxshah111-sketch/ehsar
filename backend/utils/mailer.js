@@ -1,33 +1,10 @@
-import nodemailer from "nodemailer";
-
-// Built once and reused for every email - creating a new transporter per
-// request would mean re-authenticating with Gmail on every single order.
-// If EMAIL_USER/EMAIL_PASS aren't set, this stays null and every send is
-// skipped quietly (see below) so a missing/incomplete email config can
-// never break order placement itself.
-let transporter = null;
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    // Vercel's serverless functions sometimes resolve smtp.gmail.com to an
-    // IPv6 address first, and the TLS handshake over that route can just
-    // drop mid-connection ("Client network socket disconnected before
-    // secure TLS connection was established"). Forcing IPv4 avoids that
-    // broken path entirely. The timeouts below also mean a slow/stuck
-    // connection fails fast and gets logged, instead of hanging for the
-    // platform's default (much longer) socket timeout.
-    family: 4,
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 10_000,
-  });
-}
+// Sends order notifications via Resend's HTTP API instead of Gmail SMTP.
+// Gmail SMTP (port 465/587) is unreliable from Vercel's serverless
+// functions - the TLS handshake or connection can just drop or time out,
+// because outbound SMTP from short-lived serverless containers is a known
+// weak spot on most platforms. Resend's API is a plain HTTPS POST, which
+// serverless functions handle the same way as any other API call, so it
+// doesn't hit that class of problem at all.
 
 const money = (n) => `Rs. ${Number(n || 0).toLocaleString()}`;
 
@@ -110,34 +87,43 @@ function buildOrderEmailHtml(order) {
 
 // Fire-and-forget by design: called without awaiting from the order route,
 // and every failure path here is caught and logged rather than thrown, so a
-// broken/missing email config or a transient Gmail error can never prevent
-// an order from being created or make the checkout request fail/slow down.
+// missing/broken email config or a Resend API error can never prevent an
+// order from being created or make the checkout request fail/slow down.
 export async function sendOrderNotificationEmail(order) {
-  if (!transporter) {
-    console.warn("Order email skipped: EMAIL_USER/EMAIL_PASS not configured.");
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("Order email skipped: RESEND_API_KEY not configured.");
     return;
   }
-  const to = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
-  const mail = {
-    from: `"Ehsar Store" <${process.env.EMAIL_USER}>`,
-    to,
-    subject: `New Order #${order._id.toString().slice(-6).toUpperCase()} - ${money(order.totalAmount)}`,
-    html: buildOrderEmailHtml(order),
-  };
+  // RESEND_FROM must be either "onboarding@resend.dev" (Resend's shared test
+  // address - works immediately, no setup, but can only send TO the email
+  // you signed up to Resend with) or an address at a domain you've verified
+  // in the Resend dashboard (needed to send to your customers/any address).
+  const from = process.env.RESEND_FROM || "onboarding@resend.dev";
+  const to = process.env.ADMIN_EMAIL;
+  if (!to) {
+    console.warn("Order email skipped: ADMIN_EMAIL not configured.");
+    return;
+  }
 
-  // One retry only, after a short pause - covers the connection dropping
-  // mid-handshake on the first attempt (a known intermittent issue with
-  // Gmail SMTP from serverless platforms), without turning a genuinely
-  // broken config into a slow, repeated hammering of Gmail's servers.
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      await transporter.sendMail(mail);
-      return;
-    } catch (err) {
-      console.error(`Failed to send order notification email (attempt ${attempt}):`, err.message);
-      if (attempt === 1) {
-        await new Promise((r) => setTimeout(r, 1500));
-      }
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `Ehsar Store <${from}>`,
+        to,
+        subject: `New Order #${order._id.toString().slice(-6).toUpperCase()} - ${money(order.totalAmount)}`,
+        html: buildOrderEmailHtml(order),
+      }),
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      console.error(`Failed to send order notification email: ${response.status} ${body}`);
     }
+  } catch (err) {
+    console.error("Failed to send order notification email:", err.message);
   }
 }

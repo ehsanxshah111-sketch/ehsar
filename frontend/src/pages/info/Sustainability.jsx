@@ -1,22 +1,25 @@
 import React from "react";
 import InfoPage from "./InfoPage.jsx";
 
-// Placeholder copy - swap this out for your real sustainability practices
-// whenever you're ready. Nothing else needs to change; this is the only
-// file that feeds the "Sustainability" page.
 const Sustainability = () => (
   <InfoPage title="Sustainability">
     <p>
-      We believe better clothing starts with better choices - in the materials we select, the people we
-      work with, and how long a piece is designed to last.
+      We're a small team, so sustainability for us isn't a checklist - it's mostly about not being
+      wasteful.
     </p>
     <p>
-      We favor durable fabrics and timeless cuts over fast-fashion turnover, so fewer pieces end up
-      replaced each season. Packaging is kept minimal, and we're continuously looking at ways to reduce
-      waste across our supply chain.
+      We keep our collections tight instead of chasing every trend, and we pick fabrics that are meant to
+      hold up to regular wear and washing, not just look good in one photo. Producing in smaller batches
+      also means less unsold stock sitting around and eventually getting thrown out.
     </p>
     <p>
-      This is an ongoing commitment, and we'll keep updating this page as our practices evolve.
+      Our packaging is kept simple and minimal on purpose - no unnecessary boxes or filler, just what's
+      needed to get your order to you safely.
+    </p>
+    <p>
+      We're a growing brand, and we know there's more we can do here. As we scale, we'll keep looking at
+      our suppliers, our packaging, and our production process, and we'll update this page honestly as
+      those things change.
     </p>
   </InfoPage>
 );

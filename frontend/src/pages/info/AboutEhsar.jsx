@@ -1,23 +1,35 @@
 import React from "react";
 import InfoPage from "./InfoPage.jsx";
 
-// Placeholder copy - swap this out for your real brand story whenever
-// you're ready. Nothing else needs to change; this is the only file that
-// feeds the "About Ehsar" page.
 const AboutEhsar = () => (
   <InfoPage title="About Ehsar">
     <p>
-      Ehsar was founded with a simple idea: contemporary essentials that are made to last, not just to
-      trend. Every piece in our collection is chosen for its fit, its fabric, and its ability to earn a
-      permanent place in your wardrobe.
+      Ehsar started with a simple frustration: too many clothes that look good for a season and then fall
+      apart, lose their shape, or just stop being wearable. We wanted to build something different -
+      pieces you actually reach for months later, not just the week you bought them.
     </p>
     <p>
-      We work closely with a small number of manufacturing partners so we can stay hands-on with quality
-      at every stage, from the first sample to the final stitch.
+      Every item in our collection is chosen carefully, with an eye on fit, fabric quality, and stitching
+      that holds up to real wear, not just fast turnover. We're a small team, which means we stay closely
+      involved at every stage - from picking fabric, to checking samples, to the final quality check
+      before an order leaves our hands.
     </p>
     <p>
-      Ehsar is based in Pakistan and ships nationwide, with every order packed and checked by hand before
-      it leaves our warehouse.
+      We're based in Pakistan and ship nationwide. Every order is packed and inspected by hand, and we
+      treat each one like it's going to someone we know - because for a store this size, in a lot of ways,
+      it is.
+    </p>
+    <p>
+      You can also find us on Instagram{" "}
+      <a
+        href="https://instagram.com/ehsar.store"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline"
+      >
+        @ehsar.store
+      </a>
+      , where we share new arrivals, restocks, and a closer look at what we're working on.
     </p>
   </InfoPage>
 );
