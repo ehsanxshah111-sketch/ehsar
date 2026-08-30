@@ -5,6 +5,7 @@ import Coupon from "../models/Coupon.js";
 import { protectUser } from "../middleware/userAuth.js";
 import { protect } from "../middleware/auth.js";
 import { logActivity } from "../utils/activityLogger.js";
+import { sendOrderNotificationEmail } from "../utils/mailer.js";
 
 const router = express.Router();
 
@@ -116,6 +117,11 @@ router.post("/", protectUser, async (req, res) => {
       }
       throw createErr;
     }
+
+    // Not awaited on purpose - the customer's response shouldn't wait on
+    // (or fail because of) Gmail being slow or unreachable. Errors are
+    // caught and logged inside sendOrderNotificationEmail itself.
+    sendOrderNotificationEmail(order);
 
     res.status(201).json(order);
   } catch (err) {
