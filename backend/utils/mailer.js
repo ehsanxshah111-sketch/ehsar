@@ -8,11 +8,24 @@ import nodemailer from "nodemailer";
 let transporter = null;
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    // Vercel's serverless functions sometimes resolve smtp.gmail.com to an
+    // IPv6 address first, and the TLS handshake over that route can just
+    // drop mid-connection ("Client network socket disconnected before
+    // secure TLS connection was established"). Forcing IPv4 avoids that
+    // broken path entirely. The timeouts below also mean a slow/stuck
+    // connection fails fast and gets logged, instead of hanging for the
+    // platform's default (much longer) socket timeout.
+    family: 4,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 10_000,
   });
 }
 
@@ -105,14 +118,26 @@ export async function sendOrderNotificationEmail(order) {
     return;
   }
   const to = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
-  try {
-    await transporter.sendMail({
-      from: `"Ehsar Store" <${process.env.EMAIL_USER}>`,
-      to,
-      subject: `New Order #${order._id.toString().slice(-6).toUpperCase()} - ${money(order.totalAmount)}`,
-      html: buildOrderEmailHtml(order),
-    });
-  } catch (err) {
-    console.error("Failed to send order notification email:", err.message);
+  const mail = {
+    from: `"Ehsar Store" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: `New Order #${order._id.toString().slice(-6).toUpperCase()} - ${money(order.totalAmount)}`,
+    html: buildOrderEmailHtml(order),
+  };
+
+  // One retry only, after a short pause - covers the connection dropping
+  // mid-handshake on the first attempt (a known intermittent issue with
+  // Gmail SMTP from serverless platforms), without turning a genuinely
+  // broken config into a slow, repeated hammering of Gmail's servers.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await transporter.sendMail(mail);
+      return;
+    } catch (err) {
+      console.error(`Failed to send order notification email (attempt ${attempt}):`, err.message);
+      if (attempt === 1) {
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    }
   }
 }
