@@ -7,10 +7,11 @@ import { useCustomerAuth } from "../context/CustomerAuthContext.jsx";
 const ALL_TYPE = { label: "All", type: "" };
 const SHOES_TYPE = { label: "Shoes", type: "shoes" };
 const WATCHES_TYPE = { label: "Watches", type: "watches" };
+const HANDBAGS_TYPE = { label: "Handbags", type: "handbags" };
 
 // Women and Men each get their own dropdown contents now, instead of one
-// shared list - Women shows Jewelry in place of Clothing.
-const WOMEN_TYPES = [ALL_TYPE, { label: "Jewelry", type: "jewelry" }, SHOES_TYPE, WATCHES_TYPE];
+// shared list - Women shows Jewelry and Handbags in place of Clothing.
+const WOMEN_TYPES = [ALL_TYPE, { label: "Jewelry", type: "jewelry" }, HANDBAGS_TYPE, SHOES_TYPE, WATCHES_TYPE];
 const MEN_TYPES = [ALL_TYPE, { label: "Clothing", type: "clothing" }, SHOES_TYPE, WATCHES_TYPE];
 
 // Desktop dropdown for Women/Men - hover reveals that category's own set of

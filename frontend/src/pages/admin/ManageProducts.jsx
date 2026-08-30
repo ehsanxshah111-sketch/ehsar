@@ -27,6 +27,7 @@ const SIZE_HINTS = {
   shoes: "38, 39, 40, 41, 42",
   watches: "",
   jewelry: "",
+  handbags: "",
 };
 
 const ManageProducts = () => {
@@ -272,6 +273,7 @@ const ManageProducts = () => {
                 <option value="shoes">Shoes</option>
                 <option value="watches">Watches</option>
                 <option value="jewelry">Jewelry</option>
+                <option value="handbags">Handbags</option>
               </select>
             </div>
             <div>
@@ -293,7 +295,7 @@ const ManageProducts = () => {
             <div>
               <label className="text-xs uppercase text-gray-500 mb-1 block">
                 Sizes (comma separated){form.type === "shoes" && " — use numeric EU/UK sizes"}
-                {(form.type === "watches" || form.type === "jewelry") && " — usually leave blank"}
+                {(form.type === "watches" || form.type === "jewelry" || form.type === "handbags") && " — usually leave blank"}
               </label>
               <input name="sizes" value={form.sizes} onChange={handleChange} className="input-field" />
             </div>
@@ -394,6 +396,7 @@ const ManageProducts = () => {
           <option value="shoes">Shoes</option>
           <option value="watches">Watches</option>
           <option value="jewelry">Jewelry</option>
+          <option value="handbags">Handbags</option>
         </select>
       </div>
 

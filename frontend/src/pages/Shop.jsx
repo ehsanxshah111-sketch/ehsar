@@ -110,6 +110,7 @@ const Shop = () => {
         <button onClick={() => setType("shoes")} className={type === "shoes" ? "text-ehsar-gold" : ""}>Shoes</button>
         <button onClick={() => setType("watches")} className={type === "watches" ? "text-ehsar-gold" : ""}>Watches</button>
         <button onClick={() => setType("jewelry")} className={type === "jewelry" ? "text-ehsar-gold" : ""}>Jewelry</button>
+        <button onClick={() => setType("handbags")} className={type === "handbags" ? "text-ehsar-gold" : ""}>Handbags</button>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10 border-y border-gray-200 py-4">
